@@ -1,6 +1,6 @@
 # NetDisconnector
 
-This is a tool for to disconnect internet use hotkey  
+This is a tool can disconnect internet use hotkey  
 
 [Download here...](https://github.com/Barracuda10/NetDisconnector/releases/download/1.0/NetDisconnector.exe)
 
