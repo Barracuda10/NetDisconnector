@@ -5,9 +5,9 @@ This is a tool for to disconnect internet use hotkey
 Download here...  
 
 No need extra setting file  
-Just run the .exe file  
+Run the .exe file  
 Select target network adapter name  
-Press hotkey it will disconnect immediately  
+Press hotkey it can disconnect immediately  
 The default hotkey is set to PAUSE key  
 
 
