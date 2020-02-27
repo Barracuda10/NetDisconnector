@@ -27,8 +27,7 @@ No extra setting file
   
   
 2 Choose this to switch method to disable adapter    
-The default method is release IP address  
-And its better to use, more faster to disconnect  
-This is a backup method if the default method not work  
+The default method is set to release IP address, its better to use, more faster to disconnect  
+This method under is a backup method if the default method not work  
 
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_method.png)
