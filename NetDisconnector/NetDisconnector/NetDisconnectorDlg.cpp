@@ -43,6 +43,7 @@ CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 	, RcSoundState(0)
 	, DcMethod(0)
 	, get_vk_code(0)
+	, get_modifiers(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 }
@@ -61,15 +62,18 @@ BEGIN_MESSAGE_MAP(CNetDisconnectorDlg, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO, &CNetDisconnectorDlg::OnCbnSelchangeCombo)
 	ON_COMMAND(ID_NETWORK_DISCONNECT, &CNetDisconnectorDlg::OnNetworkDisconnect)
 	ON_COMMAND(ID_NETWORK_CONNECT, &CNetDisconnectorDlg::OnNetworkConnect)
-	ON_COMMAND(ID_OPTION_CHANGEHOTKEY, &CNetDisconnectorDlg::OnOptionChangehotkey)
+	ON_COMMAND(ID_OPTIONS_CHANGEHOTKEY, &CNetDisconnectorDlg::OnOptionsChangehotkey)
 	ON_WM_HOTKEY()
 	ON_WM_CTLCOLOR()
 	ON_WM_DESTROY()
 	ON_WM_CLOSE()
 	ON_WM_HELPINFO()
-	ON_COMMAND(ID_OPTION_DISCONNECTSOUND, &CNetDisconnectorDlg::OnOptionDisconnectsound)
-	ON_COMMAND(ID_OPTION_RECONNECTSOUND, &CNetDisconnectorDlg::OnOptionReconnectsound)
-	ON_COMMAND(ID_OPTION_DISABLEADAPTER, &CNetDisconnectorDlg::OnOptionDisableadapter)
+	ON_COMMAND(ID_OPTIONS_DISCONNECTSOUND, &CNetDisconnectorDlg::OnOptionsDisconnectsound)
+	ON_COMMAND(ID_OPTIONS_RECONNECTSOUND, &CNetDisconnectorDlg::OnOptionsReconnectsound)
+	ON_COMMAND(ID_OPTIONS_DISABLEADAPTER, &CNetDisconnectorDlg::OnOptionsDisableadapter)
+	ON_CBN_CLOSEUP(IDC_COMBO, &CNetDisconnectorDlg::OnCbnCloseupCombo)
+	ON_EN_SETFOCUS(IDC_LOG, &CNetDisconnectorDlg::OnEnSetfocusLog)
+	ON_COMMAND(ID_OPTIONS_RELEASEIPADDRESS, &CNetDisconnectorDlg::OnOptionsReleaseipaddress)
 END_MESSAGE_MAP()
 
 
@@ -218,22 +222,26 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	CString time;
 
 	get_vk_code = AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyVk"), VK_PAUSE);
-	ATOM HotkeyID = GlobalAddAtom(_T("INITIAL_BIND")) - 0xc000;//Register hotkey
-	if (FALSE == RegisterHotKey(GetSafeHwnd(), 1, AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyModifiers"), NULL) | MOD_NOREPEAT, get_vk_code)) {
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-		
-		m_LogContent += time + _T("Register hotkey failed!!!") + _T("\r\n");
-	}
-	get_hotkey = AfxGetApp()->GetProfileString(_T("Settings"), _T("Key"), _T("Pause"));//Get hotkey string
+	get_modifiers = AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyModifiers"), NULL);
 
 	GetLocalTime(&systime);
 	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-	if (get_vk_code >= 0x21 && get_vk_code <= 0x2D) {
+	if (get_vk_code >= 0x21 && get_vk_code <= 0x2D || get_modifiers == 1 || get_modifiers == 3 || get_modifiers == 4 || get_modifiers == 6) {
 		m_LogContent += time + _T("This key may not work!!!") + _T("\r\n");
 	}
-	m_LogContent += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+
+	GetLocalTime(&systime);
+	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+	ATOM HotkeyID = GlobalAddAtom(_T("INITIAL_BIND")) - 0xc000;//Register hotkey
+	if (FALSE == RegisterHotKey(GetSafeHwnd(), 1, get_modifiers | MOD_NOREPEAT, get_vk_code)) {
+		m_LogContent += time + _T("Register hotkey failed!!!");
+	}
+	else {
+		get_hotkey = AfxGetApp()->GetProfileString(_T("Settings"), _T("Key"), _T("Pause"));//Get hotkey string
+		m_LogContent += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+	}
 	UpdateData(false);
 	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 
@@ -241,13 +249,26 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	DcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcSound"), MF_CHECKED);
 	RcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("RcSound"), MF_CHECKED);
 	CMenu* menu = GetMenu()->GetSubMenu(1);
-	menu->CheckMenuItem(ID_OPTION_DISCONNECTSOUND, MF_BYCOMMAND | DcSoundState);
-	menu->CheckMenuItem(ID_OPTION_RECONNECTSOUND, MF_BYCOMMAND | RcSoundState);
+	menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | DcSoundState);
+	menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | RcSoundState);
 
-	DcMethod = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcMethod"), MF_UNCHECKED);
-	menu->CheckMenuItem(ID_OPTION_DISABLEADAPTER, MF_BYCOMMAND | DcMethod);
+	DcMethod = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcMethod"), 0);
+	if (DcMethod == MF_CHECKED)
+		DcMethod = 1;
+	else if(DcMethod == MF_UNCHECKED)
+		DcMethod = 0;
 
-	return TRUE;  // return TRUE  unless you set the focus to a control
+	if (DcMethod == 0) {
+		menu->CheckMenuRadioItem(5, 6, 5, MF_BYPOSITION);
+	}
+	else {
+		menu->CheckMenuRadioItem(5, 6, 6, MF_BYPOSITION);
+	}
+
+
+	GetDlgItem(IDC_LOG)->SetFocus();
+
+	return FALSE;  // return TRUE  unless you set the focus to a control
 }
 
 // If you add a minimize button to your dialog, you will need the code below
@@ -311,6 +332,17 @@ void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 }
 
 
+void CNetDisconnectorDlg::OnCbnCloseupCombo()
+{
+	GetDlgItem(IDC_LOG)->SetFocus();
+}
+
+void CNetDisconnectorDlg::OnEnSetfocusLog()
+{
+	::HideCaret(GetDlgItem(IDC_LOG)->GetSafeHwnd());
+}
+
+
 void CNetDisconnectorDlg::OnNetworkDisconnect()
 {
 	UpdateData(true);
@@ -318,10 +350,10 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 	CString time;
 
 	CString release;
-	if (DcMethod == MF_UNCHECKED) {
+	if (DcMethod == 0) {
 		release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
 	}
-	else if (DcMethod == MF_CHECKED) {
+	else if (DcMethod == 1) {
 		release = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=disabled");
 	}
 
@@ -372,10 +404,10 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 	CString time;
 
 	CString renew;
-	if (DcMethod == MF_UNCHECKED) {
+	if (DcMethod == 0) {
 		renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
 	}
-	else if (DcMethod == MF_CHECKED) {
+	else if (DcMethod == 1) {
 		renew = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
 	}
 
@@ -419,7 +451,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 }
 
 
-void CNetDisconnectorDlg::OnOptionChangehotkey()
+void CNetDisconnectorDlg::OnOptionsChangehotkey()
 {
 	UnregisterHotKey(GetSafeHwnd(), 1); //Unbind all hotkey
 
@@ -440,8 +472,9 @@ void CNetDisconnectorDlg::OnOptionChangehotkey()
 
 	ATOM HotkeyID = GlobalAddAtom(_T("REBIND")) - 0xc000; //Register new hotkey
 	BOOL done = RegisterHotKey(GetSafeHwnd(), 1, RecDlg.input_modifiers | MOD_NOREPEAT, RecDlg.input_vk_code);
+	get_modifiers = RecDlg.input_modifiers;
 	get_vk_code = RecDlg.input_vk_code;
-	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("KeyModifiers"), RecDlg.input_modifiers);
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("KeyModifiers"), get_modifiers);
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("KeyVk"), get_vk_code);
 
 	UpdateData(true);
@@ -454,13 +487,24 @@ void CNetDisconnectorDlg::OnOptionChangehotkey()
 	if (get_vk_code == 0x13) {
 		get_hotkey = "Pause";
 	}
-	if (get_vk_code >= 0x21 && get_vk_code <= 0x2D) {
+	/*
+	available
+	get_modifiers == 1 Shift + *
+	get_modifiers == 3 Shift + Ctrl + *
+	get_modifiers == 4 Alt + *
+	get_modifiers == 6 Ctrl + Alt + *
+
+	Unavailable
+	get_modifiers == 2 Ctrl + *
+	get_modifiers == 5 Shift + Alt + *
+	get_modifiers == 7 Ctrl + Shift + Alt + *
+	*/
+	if (get_vk_code >= 0x21 && get_vk_code <= 0x2D || get_modifiers == 1 || get_modifiers == 3 || get_modifiers == 4 || get_modifiers == 6) {
 		m_LogContent += _T("\r\n") + time + _T("This key may not work!!!");
 	}
 
 	AfxGetApp()->WriteProfileString(_T("Settings"), _T("Key"), get_hotkey);
 
-	//TODO：解决下录制是空的时候的状态
 	if (done) {
 		m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
 	}
@@ -482,10 +526,10 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 	if (nHotKeyId) {//If match the HotKeyId then continue
 		if (!flag) {
 			CString release;
-			if(DcMethod == MF_UNCHECKED) {
+			if(DcMethod == 0) {
 				release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
 			}
-			else if(DcMethod == MF_CHECKED) {
+			else if(DcMethod == 1) {
 				release = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=disabled");
 			}
 
@@ -534,10 +578,10 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 		}
 		else {
 			CString renew;
-			if (DcMethod == MF_UNCHECKED) {
+			if (DcMethod == 0) {
 				renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
 			}
-			else if (DcMethod == MF_CHECKED) {
+			else if (DcMethod == 1) {
 				renew = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
 			}
 
@@ -656,97 +700,108 @@ BOOL CNetDisconnectorDlg::OnHelpInfo(HELPINFO* pHelpInfo)
 }
 
 
-void CNetDisconnectorDlg::OnOptionDisconnectsound()
+void CNetDisconnectorDlg::OnOptionsDisconnectsound()
 {
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
 	SYSTEMTIME systime;
 	CString time;
 
-	if (menu->GetMenuState(ID_OPTION_DISCONNECTSOUND, MF_BYCOMMAND) == MF_CHECKED) {
+	if (menu->GetMenuState(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND) == MF_CHECKED) {
 		DcSoundState = MF_UNCHECKED;
-		menu->CheckMenuItem(ID_OPTION_DISCONNECTSOUND, MF_BYCOMMAND | MF_UNCHECKED);
+		menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | MF_UNCHECKED);
 
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Notification sound disabled");
+		m_LogContent += _T("\r\n") + time + _T("Notification sound turned off");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
-	else if (menu->GetMenuState(ID_OPTION_DISCONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
+	else if (menu->GetMenuState(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
 		DcSoundState = MF_CHECKED;
-		menu->CheckMenuItem(ID_OPTION_DISCONNECTSOUND, MF_BYCOMMAND | MF_CHECKED);
+		menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | MF_CHECKED);
 
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Notification sound enabled");
+		m_LogContent += _T("\r\n") + time + _T("Notification sound turned on");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
 }
 
 
-void CNetDisconnectorDlg::OnOptionReconnectsound()
+void CNetDisconnectorDlg::OnOptionsReconnectsound()
 {
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
 	SYSTEMTIME systime;
 	CString time;
 
-	if (menu->GetMenuState(ID_OPTION_RECONNECTSOUND, MF_BYCOMMAND) == MF_CHECKED) {
+	if (menu->GetMenuState(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND) == MF_CHECKED) {
 		RcSoundState = MF_UNCHECKED;
-		menu->CheckMenuItem(ID_OPTION_RECONNECTSOUND, MF_BYCOMMAND | MF_UNCHECKED);
+		menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | MF_UNCHECKED);
 
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Notification sound disabled");
+		m_LogContent += _T("\r\n") + time + _T("Notification sound turned off");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
-	else if (menu->GetMenuState(ID_OPTION_RECONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
+	else if (menu->GetMenuState(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
 		RcSoundState = MF_CHECKED;
-		menu->CheckMenuItem(ID_OPTION_RECONNECTSOUND, MF_BYCOMMAND | MF_CHECKED);
+		menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | MF_CHECKED);
 
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Notification sound enabled");
+		m_LogContent += _T("\r\n") + time + _T("Notification sound turned on");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
 }
 
 
-void CNetDisconnectorDlg::OnOptionDisableadapter()
+
+void CNetDisconnectorDlg::OnOptionsReleaseipaddress()
 {
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
 	SYSTEMTIME systime;
 	CString time;
 
-	if (menu->GetMenuState(ID_OPTION_DISABLEADAPTER, MF_BYCOMMAND) == MF_CHECKED) {
-		DcMethod = MF_UNCHECKED;
-		menu->CheckMenuItem(ID_OPTION_DISABLEADAPTER, MF_BYCOMMAND | MF_UNCHECKED);
-		
+	if (DcMethod != 0) {
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnect method change to release IP address");
+		m_LogContent += _T("\r\n") + time + _T("Disconnect mode change to Release IP address");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
-	else if (menu->GetMenuState(ID_OPTION_DISABLEADAPTER, MF_BYCOMMAND) == MF_UNCHECKED) {
-		DcMethod = MF_CHECKED;
-		menu->CheckMenuItem(ID_OPTION_DISABLEADAPTER, MF_BYCOMMAND | MF_CHECKED);
 
+	menu->CheckMenuRadioItem(5, 6, 5, MF_BYPOSITION);
+	DcMethod = 0;
+}
+
+
+void CNetDisconnectorDlg::OnOptionsDisableadapter()
+{
+	CMenu* menu = GetMenu()->GetSubMenu(1);
+	UpdateData(true);
+	SYSTEMTIME systime;
+	CString time;
+
+	if (DcMethod != 1) {
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnect method change to disable adapter");
+		m_LogContent += _T("\r\n") + time + _T("Disconnect mode change to Disable adapter");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
+
+	menu->CheckMenuRadioItem(5, 6, 6, MF_BYPOSITION);
+	DcMethod = 1;
 }

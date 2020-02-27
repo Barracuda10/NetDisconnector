@@ -38,7 +38,7 @@ public:
 	CEdit m_LogCtrl;
 	afx_msg void OnNetworkDisconnect();
 	afx_msg void OnNetworkConnect();
-	afx_msg void OnOptionChangehotkey();
+	afx_msg void OnOptionsChangehotkey();
 	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 	CString get_adapter;
 	CString get_hotkey;
@@ -49,11 +49,15 @@ public:
 	afx_msg void OnClose();
 	virtual void PreInitDialog();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
-	afx_msg void OnOptionDisconnectsound();
-	afx_msg void OnOptionReconnectsound();
+	afx_msg void OnOptionsDisconnectsound();
+	afx_msg void OnOptionsReconnectsound();
 	UINT DcSoundState;
 	UINT RcSoundState;
 	UINT DcMethod;
-	afx_msg void OnOptionDisableadapter();
+	afx_msg void OnOptionsDisableadapter();
 	int get_vk_code;
+	afx_msg void OnCbnCloseupCombo();
+	afx_msg void OnEnSetfocusLog();
+	afx_msg void OnOptionsReleaseipaddress();
+	int get_modifiers;
 };
