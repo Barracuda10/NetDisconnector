@@ -10,7 +10,7 @@ Immediately disconnect when press down hotkey
 
 The default hotkey is set to PAUSE key  
 It save last time settings in Registry  
-Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings
+Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings  
 No extra setting file  
 
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA)
