@@ -2,7 +2,7 @@
 
 This is a tool can disconnect internet use hotkey  
 
-[Download here...(updated)](https://github.com/Barracuda10/NetDisconnector/releases/download/1.1/NetDisconnector.exe)
+[Download here...(1.1)](https://github.com/Barracuda10/NetDisconnector/releases/download/1.1/NetDisconnector.exe)
 
 Steps:  
 Run the .exe file  
