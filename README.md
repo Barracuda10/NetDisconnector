@@ -1,6 +1,7 @@
 # NetDisconnector
 This is a tool can disconnect internet use hotkey<br>
 [[VERSION 3] Download here...](https://github.com/Barracuda10/NetDisconnector/releases/download/1.2/NetDisconnector.exe)
+![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA)
 ##### Usage:
 Run the .exe file<br>
 Select or check target network adapter name<br>
@@ -10,7 +11,6 @@ The default hotkey is set to PAUSE key<br>
 It save last time settings in Registry<br>
 Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 No extra setting file needed<br>
-![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA)
 <br>
 <br>
 <br>
