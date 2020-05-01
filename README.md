@@ -14,8 +14,7 @@ It save last time settings in Registry<br>
 Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 No extra setting file needed<br>
 <br>
-<br>
-# Main features
+## Main features
 ### Change Hotkey<br>
 You can always check or change current hotkey in options<br>
 Notice there are some keys won't work<br>
@@ -27,8 +26,7 @@ You can also change the waiting time in delay box<br>
 Notice you can also manually reconnect by pressing hotkey again<br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png)<br>
 <br>
-<br>
-# Extra features
+## Extra features
 #### Click this button to manually operate network<br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png)<br>
 <br>
