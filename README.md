@@ -1,7 +1,6 @@
 # NetDisconnector
 This is a tool can disconnect internet use hotkey<br>
 [[version 3]Download here...](https://github.com/Barracuda10/NetDisconnector/releases/download/1.2/NetDisconnector.exe)
-<br>
 #### Usage:<br>
 Run the .exe file<br>
 Select or check target network adapter name<br>
@@ -25,7 +24,6 @@ Notice there are some keys won't work<br>
 <br>
 <br>
 <br>
-<br>
 ### Auto Reconnect<br>
 Enable this to let the program auto reconnect after 15s (default) when disconnect<br>
 You can also change the waiting time in delay box<br>
@@ -35,12 +33,9 @@ Notice you can also manually reconnect by pressing hotkey again<br>
 <br>
 <br>
 <br>
-<br>
-<br>
 # Extra features
 #### Click this button to manually operate network<br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png)
-<br>
 <br>
 <br>
 <br>
