@@ -19,17 +19,41 @@ No extra setting file needed
 
 
 
+# Main features
+
+1 Change Hotkey
+You can always check or change current hotkey in options
+Notice there are some keys won't work
+
+![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png)
+
+    
+    
+    
+2 Auto Reconnect
+Enable this to let the program auto reconnect after 15s (default) when disconnect
+You can also change the waiting time in delay box
+Notice you can also manually reconnect by pressing hotkey again
+
+![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png)
+    
+    
+    
+
+
+
 # Extra features
 
-1 Click on this button to manually operate network  
+1 Click this button to manually operate network  
 
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png)
 
-
-  
-  
-2 Choose this to switch method to disable adapter    
+    
+    
+    
+2 Choose this to switch disconnect method to disable adapter    
+There are two different approachs to disconnect    
 The default method is set to release IP address, its better to use, and faster to disconnect  
-This method under is a backup method if the default method not work  
+The disable adapter method shown below is a backup method when default method not work  
 
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_method.png)
