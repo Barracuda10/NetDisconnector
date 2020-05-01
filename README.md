@@ -1,15 +1,15 @@
 # NetDisconnector
 
-This is a tool can disconnect internet use hotkey  
+This is a tool can disconnect internet use hotkey<br><br><br>
 
 [Download here...(1.1)](https://github.com/Barracuda10/NetDisconnector/releases/download/1.1/NetDisconnector.exe)
 
-Usage:  
+#### Usage:  
 Run the .exe file  
 Select or check target network adapter name  
 Immediately disconnect when press down hotkey  
 
-Note:  
+#### Note:  
 The default hotkey is set to PAUSE key  
 It save last time settings in Registry  
 Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings  
@@ -21,7 +21,7 @@ No extra setting file needed
 
 # Main features
 
-1 Change Hotkey
+### Change Hotkey<br>
 You can always check or change current hotkey in options
 Notice there are some keys won't work
 
@@ -30,7 +30,7 @@ Notice there are some keys won't work
     
     
     
-2 Auto Reconnect
+### Auto Reconnect<br>
 Enable this to let the program auto reconnect after 15s (default) when disconnect
 You can also change the waiting time in delay box
 Notice you can also manually reconnect by pressing hotkey again
@@ -44,14 +44,14 @@ Notice you can also manually reconnect by pressing hotkey again
 
 # Extra features
 
-1 Click this button to manually operate network  
+### Click this button to manually operate network<br>
 
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png)
 
     
     
     
-2 Choose this to switch disconnect method to disable adapter    
+### Choose this to switch disconnect method to disable adapter<br>
 There are two different approachs to disconnect    
 The default method is set to release IP address, its better to use, and faster to disconnect  
 The disable adapter method shown below is a backup method when default method not work  
