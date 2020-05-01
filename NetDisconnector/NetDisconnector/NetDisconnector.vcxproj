@@ -181,6 +181,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AutoReonnect.h" />
+    <ClInclude Include="Manual.h" />
     <ClInclude Include="NetDisconnector.h" />
     <ClInclude Include="NetDisconnectorDlg.h" />
     <ClInclude Include="Record.h" />
@@ -189,6 +191,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AutoReonnect.cpp" />
+    <ClCompile Include="Manual.cpp" />
     <ClCompile Include="NetDisconnector.cpp" />
     <ClCompile Include="NetDisconnectorDlg.cpp" />
     <ClCompile Include="Record.cpp" />

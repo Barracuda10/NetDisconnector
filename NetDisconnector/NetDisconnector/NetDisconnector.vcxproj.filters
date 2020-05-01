@@ -36,6 +36,12 @@
     <ClInclude Include="Record.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Manual.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoReonnect.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetDisconnector.cpp">
@@ -48,6 +54,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Record.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoReonnect.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

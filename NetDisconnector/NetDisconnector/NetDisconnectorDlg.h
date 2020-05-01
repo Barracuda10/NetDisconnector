@@ -4,6 +4,7 @@
 
 #pragma once
 #include "afxwin.h"
+#include "Manual.h"
 
 
 // CNetDisconnectorDlg dialog
@@ -32,6 +33,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	void OnCbnSelchangeCombo();
 	DECLARE_MESSAGE_MAP()
+private:
+	Manual *pManual;
 public:
 	CComboBox m_AdaptersList;
 	CString m_LogContent;
@@ -43,6 +46,7 @@ public:
 	CString get_adapter;
 	CString get_hotkey;
 	CFont m_font;
+	CFont m_font_2;
 	CBrush m_brush;
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnDestroy();
@@ -60,4 +64,9 @@ public:
 	afx_msg void OnEnSetfocusLog();
 	afx_msg void OnOptionsReleaseipaddress();
 	int get_modifiers;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnHelpManual();
+	afx_msg void OnOptionsAutoreconnect();
+	UINT AutoReconnectState;
+	int reconnectDelay;
 };

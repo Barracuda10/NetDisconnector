@@ -12,21 +12,23 @@
 #endif
 
 
-//These header used to get adaptors
-#include <winsock2.h>
-#include <iphlpapi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#pragma comment(lib, "IPHLPAPI.lib")
-#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
-#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+//These headers use to get adaptors
+//#include <winsock2.h>
+//#include <iphlpapi.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#pragma comment(lib, "IPHLPAPI.lib")
+//#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+//#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
-//This header use to access Record dialog
+//These header use to access other dialogs
 #include "Record.h"
+#include "AutoReonnect.h"
 
-//These header used to play sound
+//These headers use to play sound
 #include<mmsystem.h>
 #pragma comment(lib,"winmm.lib")
+
 
 
 
@@ -44,6 +46,8 @@ CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 	, DcMethod(0)
 	, get_vk_code(0)
 	, get_modifiers(0)
+	, AutoReconnectState(0)
+	, reconnectDelay(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 }
@@ -74,6 +78,9 @@ BEGIN_MESSAGE_MAP(CNetDisconnectorDlg, CDialogEx)
 	ON_CBN_CLOSEUP(IDC_COMBO, &CNetDisconnectorDlg::OnCbnCloseupCombo)
 	ON_EN_SETFOCUS(IDC_LOG, &CNetDisconnectorDlg::OnEnSetfocusLog)
 	ON_COMMAND(ID_OPTIONS_RELEASEIPADDRESS, &CNetDisconnectorDlg::OnOptionsReleaseipaddress)
+	ON_WM_TIMER()
+	ON_COMMAND(ID_HELP_MANUAL, &CNetDisconnectorDlg::OnHelpManual)
+	ON_COMMAND(ID_OPTIONS_AUTORECONNECT, &CNetDisconnectorDlg::OnOptionsAutoreconnect)
 END_MESSAGE_MAP()
 
 
@@ -97,6 +104,12 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	StrCpyW(lf.lfFaceName, L"Calibri");
 	m_font.CreateFontIndirect(&lf);
 	GetDlgItem(IDC_LOG)->SetFont(&m_font);
+
+
+	memset(&lf, 0, sizeof(LOGFONT));
+	lf.lfHeight = 15;
+	m_font_2.CreateFontIndirect(&lf);
+	GetDlgItem(IDC_COMBO)->SetFont(&m_font_2);
 
 
 	//GetAdaptersInfo
@@ -206,9 +219,12 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 		if (pos == -1) {
 			pos = m_AdaptersList.FindStringExact(0, _T("本地连接"));
 			if (pos == -1) {
-				pos = m_AdaptersList.FindStringExact(0, _T("WLAN"));
+				pos = m_AdaptersList.FindStringExact(0, _T("Wi-Fi"));
 				if (pos == -1) {
-					pos = 0;//If cant find default adapter, set it to first one
+					pos = m_AdaptersList.FindStringExact(0, _T("WLAN"));
+					if (pos == -1) {
+						pos = 0;//If cant find default adapter, set it to first one
+					}
 				}
 			}
 		}
@@ -259,11 +275,15 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 		DcMethod = 0;
 
 	if (DcMethod == 0) {
-		menu->CheckMenuRadioItem(5, 6, 5, MF_BYPOSITION);
+		menu->CheckMenuRadioItem(6, 7, 6, MF_BYPOSITION);
 	}
 	else {
-		menu->CheckMenuRadioItem(5, 6, 6, MF_BYPOSITION);
+		menu->CheckMenuRadioItem(6, 7, 7, MF_BYPOSITION);
 	}
+
+
+	AutoReconnectState =  AfxGetApp()->GetProfileInt(_T("Settings"), _T("AutoReconnect"), BST_UNCHECKED);
+	reconnectDelay = AfxGetApp()->GetProfileInt(_T("Settings"), _T("ReconnectDelay"), 15000);
 
 
 	GetDlgItem(IDC_LOG)->SetFocus();
@@ -314,19 +334,24 @@ HCURSOR CNetDisconnectorDlg::OnQueryDragIcon()
 }
 
 
+static bool connection = true;
+static bool timeout = false;
+static bool waiting = false;
+
 
 void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 {
 	UpdateData(true);
 
 	m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Get adaptor name
+	connection = true;
 
 	SYSTEMTIME systime;
 	CString time;
 	GetLocalTime(&systime);
 	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-	m_LogContent += _T("\r\n") + time + _T("Disconnect target now set to ") + get_adapter + _T("");
+	m_LogContent += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter + _T("");
 	UpdateData(false);
 	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 }
@@ -337,117 +362,10 @@ void CNetDisconnectorDlg::OnCbnCloseupCombo()
 	GetDlgItem(IDC_LOG)->SetFocus();
 }
 
+
 void CNetDisconnectorDlg::OnEnSetfocusLog()
 {
 	::HideCaret(GetDlgItem(IDC_LOG)->GetSafeHwnd());
-}
-
-
-void CNetDisconnectorDlg::OnNetworkDisconnect()
-{
-	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
-
-	CString release;
-	if (DcMethod == 0) {
-		release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
-	}
-	else if (DcMethod == 1) {
-		release = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=disabled");
-	}
-
-	USES_CONVERSION;
-	LPWSTR temp = new WCHAR[release.GetLength() + 1];
-	wcscpy((LPTSTR)temp, T2W((LPTSTR)release.GetBuffer(NULL)));
-	release.ReleaseBuffer();
-
-	STARTUPINFO si = { sizeof(si) };
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_HIDE;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&pi, sizeof(pi));
-
-	CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-	m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
-	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-
-	if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
-		WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-		m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-		m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
-		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-	}
-
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-	m_LogContent += _T("\r\n") + time + _T("Disconnected");
-	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-}
-
-
-void CNetDisconnectorDlg::OnNetworkConnect()
-{
-	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
-
-	CString renew;
-	if (DcMethod == 0) {
-		renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
-	}
-	else if (DcMethod == 1) {
-		renew = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
-	}
-
-	USES_CONVERSION;
-	LPWSTR temp = new WCHAR[renew.GetLength() + 1];
-	wcscpy((LPTSTR)temp, T2W((LPTSTR)renew.GetBuffer(NULL)));
-	renew.ReleaseBuffer();
-
-	STARTUPINFO si = { sizeof(si) };
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_HIDE;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&pi, sizeof(pi));
-
-	CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-	m_LogContent += _T("\r\n") + time + _T("Connecting...");
-	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-
-	if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
-		WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-		m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-		m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
-		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-	}
-
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-	m_LogContent += _T("\r\n") + time + _T("Connected");
-	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 }
 
 
@@ -516,15 +434,357 @@ void CNetDisconnectorDlg::OnOptionsChangehotkey()
 }
 
 
-void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
+void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 {
-	static bool flag = false;
+	//IDD_AUTORECONNECT_DIALOG
+	INT_PTR result;
+	AutoReonnect AutDlg;
+	CString output_delay;
+	UINT AutoReconnectStateOld = AutoReconnectState;
+	AutDlg.input_autoReconnect = AutoReconnectState;
+	output_delay.Format(_T("%d"), reconnectDelay);
+	AutDlg.m_delay = output_delay;
+	AutDlg.DoModal();
+	AutoReconnectState = AutDlg.input_autoReconnect;
+	reconnectDelay = _ttoi(AutDlg.m_delay);
+
 	UpdateData(true);
 	SYSTEMTIME systime;
 	CString time;
 
-	if (nHotKeyId) {//If match the HotKeyId then continue
-		if (!flag) {
+	if (AutoReconnectState != AutoReconnectStateOld) {
+		if (AutoReconnectState == BST_UNCHECKED) {
+			GetLocalTime(&systime);
+			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+			m_LogContent += _T("\r\n") + time + _T("Auto reconnect disabled");
+			UpdateData(false);
+			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		}
+		else if (AutoReconnectState == BST_CHECKED) {
+			GetLocalTime(&systime);
+			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+			m_LogContent += _T("\r\n") + time + _T("Auto reconnect enabled");
+			UpdateData(false);
+			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		}
+	}
+}
+
+
+//DWORD WINAPI ThreadProc(_In_ LPVOID lpParameter) {
+//	CNetDisconnectorDlg *pDlg = (CNetDisconnectorDlg*)lpParameter;//pDlg->
+//	
+//	pDlg->UpdateData(true);
+//	SYSTEMTIME systime;
+//	CString time;
+//	
+//	if (connection) {
+//		CString release;
+//		if (pDlg->DcMethod == 0) {
+//			release = _T("cmd.exe /c ipconfig /release \"") + pDlg->get_adapter + _T("\">nul");
+//		}
+//		else if (pDlg->DcMethod == 1) {
+//			release = _T("cmd.exe /c netsh interface set interface name=\"") + pDlg->get_adapter + _T("\" admin=disabled");
+//		}
+//
+//		USES_CONVERSION;
+//		LPWSTR temp = new WCHAR[release.GetLength() + 1];
+//		wcscpy((LPTSTR)temp, T2W((LPTSTR)release.GetBuffer(NULL)));
+//		release.ReleaseBuffer();
+//
+//		STARTUPINFO si = { sizeof(si) };
+//		si.dwFlags = STARTF_USESHOWWINDOW;
+//		si.wShowWindow = SW_HIDE;
+//		PROCESS_INFORMATION pi;
+//		ZeroMemory(&pi, sizeof(pi));
+//
+//		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+//
+//		GetLocalTime(&systime);
+//		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+//		
+//		pDlg->m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
+//		pDlg->UpdateData(false);
+//		pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//
+//		if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
+//			WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+//			GetLocalTime(&systime);
+//			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+//
+//			pDlg->m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+//			pDlg->m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+//			pDlg->UpdateData(false);
+//			pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//		}
+//	}
+//	else {
+//		CString renew;
+//		if (pDlg->DcMethod == 0) {
+//			renew = _T("cmd.exe /c ipconfig /renew \"") + pDlg->get_adapter + _T("\">nul");
+//		}
+//		else if (pDlg->DcMethod == 1) {
+//			renew = _T("cmd.exe /c netsh interface set interface name=\"") + pDlg->get_adapter + _T("\" admin=enabled");
+//		}
+//
+//		USES_CONVERSION;
+//		LPWSTR temp = new WCHAR[renew.GetLength() + 1];
+//		wcscpy((LPTSTR)temp, T2W((LPTSTR)renew.GetBuffer(NULL)));
+//		renew.ReleaseBuffer();
+//
+//		STARTUPINFO si = { sizeof(si) };
+//		si.dwFlags = STARTF_USESHOWWINDOW;
+//		si.wShowWindow = SW_HIDE;
+//		PROCESS_INFORMATION pi;
+//		ZeroMemory(&pi, sizeof(pi));
+//
+//		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+//
+//		GetLocalTime(&systime);
+//		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+//
+//		pDlg->m_LogContent += _T("\r\n") + time + _T("Connecting...");
+//		pDlg->UpdateData(false);
+//		pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//
+//		if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
+//			WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+//			GetLocalTime(&systime);
+//			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+//
+//			pDlg->m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
+//			pDlg->m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+//			pDlg->UpdateData(false);
+//			pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//		}
+//	}
+//	return true;
+//}
+
+
+void CNetDisconnectorDlg::OnNetworkDisconnect()
+{
+	UpdateData(true);
+	SYSTEMTIME systime;
+	CString time;
+
+
+	if (connection) {
+		CString release;
+		if (DcMethod == 0) {
+			release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
+		}
+		else if (DcMethod == 1) {
+			release = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=disabled");
+		}
+
+		USES_CONVERSION;
+		LPWSTR temp = new WCHAR[release.GetLength() + 1];
+		wcscpy((LPTSTR)temp, T2W((LPTSTR)release.GetBuffer(NULL)));
+		release.ReleaseBuffer();
+
+		STARTUPINFO si = { sizeof(si) };
+		si.dwFlags = STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_HIDE;
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&pi, sizeof(pi));
+
+		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+
+		GetLocalTime(&systime);
+		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+		m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
+		UpdateData(false);
+		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+
+		SetTimer(1, 15000, NULL);
+		waiting = !waiting;
+		MSG msg;
+		while (true) {
+			if (MsgWaitForMultipleObjects(1, &pi.hThread, FALSE, 15000, QS_ALLEVENTS) == WAIT_OBJECT_0) {
+				GetLocalTime(&systime);
+				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+				m_LogContent += _T("\r\n") + time + _T("Disconnected");
+				UpdateData(false);
+				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				break;
+			}
+			else if (timeout) {
+				WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+				GetLocalTime(&systime);
+				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+				m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+				m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+				UpdateData(false);
+				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+
+				timeout = !timeout;
+				break;
+			}
+			else {
+				PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+				DispatchMessage(&msg);
+			}
+			Sleep(1);
+		}
+		KillTimer(1);
+		waiting = !waiting;
+
+		//if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
+		//	WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+		//	GetLocalTime(&systime);
+		//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+		//	m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+		//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+		//	UpdateData(false);
+		//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		//}
+
+		connection = !connection;
+	}
+	else {
+		GetLocalTime(&systime);
+		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+		m_LogContent += _T("\r\n") + time + _T("Disconnected");
+		UpdateData(false);
+		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+	}
+}
+
+
+void CNetDisconnectorDlg::OnNetworkConnect()
+{
+	UpdateData(true);
+	SYSTEMTIME systime;
+	CString time;
+
+	if (!connection) {
+		CString renew;
+		if (DcMethod == 0) {
+			renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
+		}
+		else if (DcMethod == 1) {
+			renew = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
+		}
+
+		USES_CONVERSION;
+		LPWSTR temp = new WCHAR[renew.GetLength() + 1];
+		wcscpy((LPTSTR)temp, T2W((LPTSTR)renew.GetBuffer(NULL)));
+		renew.ReleaseBuffer();
+
+		STARTUPINFO si = { sizeof(si) };
+		si.dwFlags = STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_HIDE;
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&pi, sizeof(pi));
+
+		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+
+		GetLocalTime(&systime);
+		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+		m_LogContent += _T("\r\n") + time + _T("Connecting...");
+		UpdateData(false);
+		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+
+		SetTimer(1, 15000, NULL);
+		waiting = !waiting;
+		MSG msg;
+		while (true) {
+			if (MsgWaitForMultipleObjects(1, &pi.hThread, FALSE, 15000, QS_ALLEVENTS) == WAIT_OBJECT_0) {
+				GetLocalTime(&systime);
+				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+				m_LogContent += _T("\r\n") + time + _T("Connected");
+				UpdateData(false);
+				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				break;
+			}
+			else if (timeout) {
+				WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+				GetLocalTime(&systime);
+				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+				m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
+				m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+				UpdateData(false);
+				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+
+				timeout = !timeout;
+				break;
+			}
+			else {
+				PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+				DispatchMessage(&msg);
+			}
+			Sleep(1);
+		}
+		KillTimer(1);
+		waiting = !waiting;
+
+		//if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
+		//	WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+		//	GetLocalTime(&systime);
+		//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+		//	m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
+		//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+		//	UpdateData(false);
+		//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		//}
+
+		connection = !connection;
+	}
+	else {
+		GetLocalTime(&systime);
+		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+		m_LogContent += _T("\r\n") + time + _T("Connected");
+		UpdateData(false);
+		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+	}
+}
+
+
+void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
+{
+	if (nHotKeyId && !waiting) {//If match the HotKeyId then continue
+		KillTimer(2);
+		UpdateData(true);
+		SYSTEMTIME systime;
+		CString time;
+
+
+		/*DWORD dwID;//Running in another thread
+		HANDLE hThread;
+		hThread = CreateThread(0, 0, ThreadProc, this, 0, &dwID);
+
+		DWORD result;
+		MSG msg;
+		while (true)
+		{
+			if (MsgWaitForMultipleObjects(1, &hThread, FALSE, INFINITE, QS_ALLEVENTS) == WAIT_OBJECT_0) {
+				break;
+			}
+			else {
+				PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+				DispatchMessage(&msg);
+				
+			}
+			Sleep(1);
+		}*/
+
+
+		if (connection) {
+			connection = !connection;
+
 			CString release;
 			if(DcMethod == 0) {
 				release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
@@ -553,30 +813,70 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			UpdateData(false);
 			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 
-			if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
-				WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+			SetTimer(1, 15000, NULL);
+			waiting = !waiting;
+			MSG msg;
+			while (true) {
+				if (MsgWaitForMultipleObjects(1, &pi.hThread, FALSE, 15000, QS_ALLEVENTS) == WAIT_OBJECT_0) {
+					if (DcSoundState == MF_CHECKED)
+						PlaySound(MAKEINTRESOURCE(IDR_WAVE1), AfxGetResourceHandle(), SND_ASYNC | SND_RESOURCE | SND_NODEFAULT);
+					break;
+				}
+				else if (timeout) {
+					WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+					GetLocalTime(&systime);
+					time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+					m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+					m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+					UpdateData(false);
+					m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+
+					timeout = !timeout;
+					break;
+				}
+				else {
+					PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+					DispatchMessage(&msg);
+				}
+				Sleep(1);
+			}
+			KillTimer(1);
+			waiting = !waiting;
+
+			//if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
+			//	WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+			//	GetLocalTime(&systime);
+			//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+			//	m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+			//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+			//	UpdateData(false);
+			//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			//}
+
+			if (AutoReconnectState == BST_CHECKED) {
 				GetLocalTime(&systime);
 				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-				m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-				m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+				CString temp;
+				temp.Format(_T("%d"), reconnectDelay / 1000);
+				m_LogContent += _T("\r\n") + time + _T("Auto reconnect after ") + temp + _T("s...");
 				UpdateData(false);
 				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				SetTimer(2, reconnectDelay, NULL);
+				return;
 			}
-			
-			if (DcSoundState == MF_CHECKED)
-				PlaySound(MAKEINTRESOURCE(IDR_WAVE1), AfxGetResourceHandle(), SND_ASYNC | SND_RESOURCE | SND_NODEFAULT);
-
 			GetLocalTime(&systime);
 			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 			m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect");
 			UpdateData(false);
 			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-
-			flag = !flag;
 		}
 		else {
+			connection = !connection;
+
 			CString renew;
 			if (DcMethod == 0) {
 				renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
@@ -605,18 +905,66 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			UpdateData(false);
 			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 
-			if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
-				WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-				m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-				m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
-				UpdateData(false);
-				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-			}
+			SetTimer(1, 15000, NULL);
+			waiting = !waiting;
+			MSG msg;
+			while (true){
+				if (MsgWaitForMultipleObjects(1, &pi.hThread, FALSE, 15000, QS_ALLEVENTS) == WAIT_OBJECT_0) {
+					if (RcSoundState == MF_CHECKED)
+						PlaySound(MAKEINTRESOURCE(IDR_WAVE2), AfxGetResourceHandle(), SND_ASYNC | SND_RESOURCE | SND_NODEFAULT);
+					break;
+				}
+				else if (timeout) {
+					WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+					GetLocalTime(&systime);
+					time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-			if (RcSoundState == MF_CHECKED)
-				PlaySound(MAKEINTRESOURCE(IDR_WAVE2), AfxGetResourceHandle(), SND_ASYNC | SND_RESOURCE | SND_NODEFAULT);
+					m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
+					m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+					UpdateData(false);
+					m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+
+					timeout = !timeout;
+
+					break;
+				}
+				else {
+					PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+
+					/*GetLocalTime(&systime);
+					time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+					CString countdown;
+					CString temp;
+					countdown.Format(_T("%d"), i);
+					if (msg.message == WM_TIMER)
+						temp = _T("WM_TIMER");
+					else if (msg.message == WM_MOUSEMOVE)
+						temp = _T("WM_MOUSEMOVE");
+					else if (msg.message == WM_KEYUP)
+						temp = _T("WM_KEYUP");
+					else
+						temp.Format(_T("%d "), msg.message);
+					m_LogContent += _T("\r\n") + time + countdown + temp;
+					UpdateData(false);
+					m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);*/
+
+					DispatchMessage(&msg);
+				}
+				Sleep(1);
+			}
+			KillTimer(1);
+			waiting = !waiting;
+
+			//if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
+			//	WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
+			//	GetLocalTime(&systime);
+			//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+			//	m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
+			//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+			//	UpdateData(false);
+			//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			//}
 
 			GetLocalTime(&systime);
 			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
@@ -624,11 +972,31 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() +_T(" to disconnect");
 			UpdateData(false);
 			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
-
-			flag = !flag;
 		}
 	}
 	CDialogEx::OnHotKey(nHotKeyId, nKey1, nKey2);
+}
+
+
+void CNetDisconnectorDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	switch (nIDEvent)
+	{
+	case 1:
+		KillTimer(1);
+		timeout = !timeout;
+	case 2:
+		KillTimer(2);
+		if (!connection) {
+			if (!waiting) {
+				OnHotKey(1, 0, 0);
+			}
+		}
+	default:
+		break;
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
 }
 
 
@@ -655,6 +1023,8 @@ void CNetDisconnectorDlg::OnDestroy()
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("DcSound"), DcSoundState);
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("RcSound"), RcSoundState);
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("DcMethod"), DcMethod);
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("AutoReconnect"), AutoReconnectState);
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("ReconnectDelay"), reconnectDelay);
 	AfxGetApp()->WriteProfileString(_T("Settings"), _T("Adapter"), get_adapter);//Save current adapter
 	UnregisterHotKey(GetSafeHwnd(), 1);
 }
@@ -764,7 +1134,6 @@ void CNetDisconnectorDlg::OnOptionsReconnectsound()
 }
 
 
-
 void CNetDisconnectorDlg::OnOptionsReleaseipaddress()
 {
 	CMenu* menu = GetMenu()->GetSubMenu(1);
@@ -776,12 +1145,12 @@ void CNetDisconnectorDlg::OnOptionsReleaseipaddress()
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnect mode change to Release IP address");
+		m_LogContent += _T("\r\n") + time + _T("Disconnect method switch to Release IP address");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
 
-	menu->CheckMenuRadioItem(5, 6, 5, MF_BYPOSITION);
+	menu->CheckMenuRadioItem(6, 7, 6, MF_BYPOSITION);
 	DcMethod = 0;
 }
 
@@ -797,11 +1166,60 @@ void CNetDisconnectorDlg::OnOptionsDisableadapter()
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnect mode change to Disable adapter");
+		m_LogContent += _T("\r\n") + time + _T("Disconnect method switch to Disable adapter");
 		UpdateData(false);
 		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
 	}
 
-	menu->CheckMenuRadioItem(5, 6, 6, MF_BYPOSITION);
+	menu->CheckMenuRadioItem(6, 7, 7, MF_BYPOSITION);
 	DcMethod = 1;
+}
+
+
+void CNetDisconnectorDlg::OnHelpManual()
+{
+	CWnd* pWnd = FindWindow(0, _T("Manual"));
+	if (!pWnd) {
+		pManual = new Manual();
+		pManual->Create(IDD_MANUAL_DIALOG, GetDesktopWindow());
+		WINDOWPLACEMENT wndpl, wndpl_parent;
+		GetWindowPlacement(&wndpl_parent);
+		pManual->GetWindowPlacement(&wndpl);
+		wndpl.rcNormalPosition.left = wndpl_parent.rcNormalPosition.left + 16;
+		wndpl.rcNormalPosition.top = wndpl_parent.rcNormalPosition.top + 36;
+		wndpl.rcNormalPosition.right = wndpl.rcNormalPosition.left + 474;
+		wndpl.rcNormalPosition.bottom = wndpl.rcNormalPosition.top + 312;
+
+		pManual->SetWindowPlacement(&wndpl);
+		pManual->ShowWindow(SW_SHOW);
+		pManual->SetFocus();
+	}
+	else {
+		pWnd->BringWindowToTop();
+		pWnd->ShowWindow(SW_NORMAL);
+	}
+	//if (pManual != NULL) {
+	//	delete pManual;
+	//	pManual = NULL;
+	//}
+	///*if (pManual != NULL) {
+	//	pManual->ShowWindow(SW_SHOW);
+	//}*/
+
+	//if (pManual == NULL) {
+	//	pManual = new Manual();
+	//	pManual->Create(IDD_MANUAL_DIALOG, GetDesktopWindow());
+	//}
+
+	/*WINDOWPLACEMENT wndpl, wndpl_parent;
+	GetWindowPlacement(&wndpl_parent);
+	pManual->GetWindowPlacement(&wndpl);
+	wndpl.rcNormalPosition.left = wndpl_parent.rcNormalPosition.left + 16;
+	wndpl.rcNormalPosition.top = wndpl_parent.rcNormalPosition.top + 36;
+	wndpl.rcNormalPosition.right = wndpl.rcNormalPosition.left + 474;
+	wndpl.rcNormalPosition.bottom = wndpl.rcNormalPosition.top + 312;
+
+	pManual->SetWindowPlacement(&wndpl);
+	pManual->ShowWindow(SW_SHOW);
+	pManual->SetFocus();*/
 }

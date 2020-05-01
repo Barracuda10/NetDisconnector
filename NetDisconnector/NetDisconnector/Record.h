@@ -1,5 +1,6 @@
 #pragma once
 #include "afxcmn.h"
+#include "afxwin.h"
 
 
 // Record ¶Ô»°¿ò
@@ -30,5 +31,10 @@ public:
 	virtual BOOL OnInitDialog();
 	CString m_RecordLabel;
 	afx_msg void OnEnSetfocusEdit1();
-	CFont m_Font;
+	CFont m_font;
+	CFont m_font_2;
+	afx_msg void OnEnSetfocusMessage();
+	afx_msg void OnBnSetfocusOk();
+	CEdit m_MessageCtrl;
+	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 };
