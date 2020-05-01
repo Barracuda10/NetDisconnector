@@ -15,13 +15,13 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
 <br>
 ## Main features
-### Change Hotkey<br>
+#### Change Hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can always check or change current hotkey in options<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys won't work<br>
 <br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png)<br>
 <br>
-### Auto Reconnect<br>
+#### Auto Reconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Enable this to let the program auto reconnect after 15s (default) when disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can also change the waiting time in delay box<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice you can also manually reconnect by pressing hotkey again<br>
@@ -29,8 +29,7 @@ This is a tool can disconnect internet use hotkey<br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png)<br>
 <br>
 ## Extra features
-#### Click this button to manually operate network<br>
-<br>
+#### Click this button to manually operate network<br><br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png)<br>
 <br>
 #### Choose this to switch disconnect method to disable adapter<br>
