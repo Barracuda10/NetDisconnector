@@ -5,9 +5,9 @@ This is a tool can disconnect internet use hotkey<br>
 <br>
 ![img](https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA)<br>
 ##### Usage:
-Run the .exe file<br>
-Select or check target network adapter name<br>
-Immediately disconnect when press down hotkey<br>
+     * Run the .exe file<br>
+      Select or check target network adapter name<br>
+      Immediately disconnect when press down hotkey<br>
 ##### Note:
 The default hotkey is set to PAUSE key<br>
 It save last time settings in Registry<br>
