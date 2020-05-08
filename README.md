@@ -14,7 +14,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
 <br>
-## Main features
+## Features
 #### Change Hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can always check or change current hotkey in options<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys won't work<br>
