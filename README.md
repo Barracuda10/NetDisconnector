@@ -27,31 +27,31 @@ This is a tool can disconnect internet use hotkey<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
 </details>
 <br>
-##### Note:
+  <h5>Note:</h5>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
 <br>
-## Features
-#### Change Hotkey<br>
+  <h2>Features</h2>
+  <h4>Change Hotkey<h4><br>
 &nbsp;&nbsp;&nbsp;&nbsp;Check and change current hotkey here<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may won't work<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png" width="410" height="310"><br>
 <br>
-#### Auto Reconnect<br>
+  <h4>Auto Reconnect</h4><br>
 &nbsp;&nbsp;&nbsp;&nbsp;Enable this to let it auto reconnect after disconnecte 15s (default)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can also change the waiting time in delay box<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can still manually reconnect by pressing hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
 <br>
-### Extra features
-#### Click this button to manually operate network<br><br>
+  <h3>Extra features</h3>
+  <h4>Click this button to manually operate network</h4><br><br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
 <br>
-#### Choose this to switch disconnect method to disable adapter<br>
+  <h4>Choose this to switch disconnect method to disable adapter</h4><br>
 &nbsp;&nbsp;&nbsp;&nbsp;There are two different approachs to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The default method is set to release IP address, its better to use, and faster to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The disable adapter method shown below is a backup method if the default one not work<br>
