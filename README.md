@@ -4,13 +4,13 @@ This is a tool can disconnect internet use hotkey<br>
 [[Version 3] Download here...](https://github.com/Barracuda10/NetDisconnector/releases/download/1.2/NetDisconnector.exe)<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA"><br>
-<h4>Usage:</h4>
+<h3>Usage:</h3>
 &nbsp;&nbsp;&nbsp;&nbsp;Run the .exe file<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Select or check target network adapter name<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
 <br>
 <details>
-  <summary>Click to see what this can do</summary>
+  <summary>Click to see what this tool can do</summary>
   <br>
   Spin the Lucky Wheel<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Start GTA5 with VPN or proxy enabled<br>
@@ -28,7 +28,7 @@ This is a tool can disconnect internet use hotkey<br>
   Other Things<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
 </details>
-  <h4>Note:</h4>
+  <h3>Note:</h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
