@@ -17,8 +17,8 @@ This is a tool can disconnect internet use hotkey<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Wait game complete Initializing Social Club<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Join a Invite Only Session and go to Lucky Wheel<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Wait 4 seconds to press S after game show Use S to Spin message<br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesnt work very well now, Also if use this method i recommand use macro to do it<br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to spin the wheel is use left stick of controller<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, Also if use this method i recommand use macro to do it<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to spin the wheel is use the left stick of controller<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect if it's not car<br>
   <br>
   Make solo Public Session<br>
