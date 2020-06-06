@@ -28,7 +28,9 @@ This is a tool can disconnect internet use hotkey<br>
   <br>
   Make solo Public Session<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
-  &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s<br>
+  &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnect time)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnect time, it means this time must subtract around 3s reconnect time<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will sign out at offline 15s<br>
   <br>
   Other Things<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
