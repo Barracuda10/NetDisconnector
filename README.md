@@ -8,6 +8,11 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Run the .exe file<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Select or check target network adapter name<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
+  <h3>Note:</h3>
+&nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
+&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
+&nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
 <br>
 <details>
   <summary>Click to see what this tool can do</summary>
@@ -17,9 +22,9 @@ This is a tool can disconnect internet use hotkey<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Wait game complete Initializing Social Club<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Join a Invite Only Session and go to Lucky Wheel<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Wait 4 seconds to press S after game show Use S to Spin message<br>
+  &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect if it's not car<br>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, Also if use this method i recommand use macro to do it<br>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to spin the wheel is use the left stick of controller<br>
-  &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect if it's not car<br>
   <br>
   Make solo Public Session<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
@@ -28,11 +33,6 @@ This is a tool can disconnect internet use hotkey<br>
   Other Things<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
 </details>
-  <h3>Note:</h3>
-&nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
-&nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
 <br>
   <h2>Features</h2>
   <h4>Change Hotkey</h4>
