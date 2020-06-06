@@ -4,11 +4,10 @@ This is a tool can disconnect internet use hotkey<br>
 [[Version 3] Download here...](https://github.com/Barracuda10/NetDisconnector/releases/download/1.2/NetDisconnector.exe)<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA"><br>
-##### Usage:
+<h4>Usage:</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Run the .exe file<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Select or check target network adapter name<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Immediately disconnect when press down hotkey<br>
-<br>
+&nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
 <details>
   <summary>Click to see what this can do</summary>
   <br>
@@ -27,14 +26,14 @@ This is a tool can disconnect internet use hotkey<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
 </details>
 <br>
-  <h5>Note:</h5>
+  <h4>Note:</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Registry path: HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
 <br>
   <h2>Features</h2>
-  <h4>Change Hotkey<h4><br>
+  <h4>Change Hotkey</h4><br>
 &nbsp;&nbsp;&nbsp;&nbsp;Check and change current hotkey here<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may won't work<br>
 <br>
