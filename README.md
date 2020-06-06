@@ -8,6 +8,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Run the .exe file<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Select or check target network adapter name<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
+<br>
 <details>
   <summary>Click to see what this can do</summary>
   <br>
@@ -25,7 +26,6 @@ This is a tool can disconnect internet use hotkey<br>
   Other Things<br>
   &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
 </details>
-<br>
   <h4>Note:</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<br>
@@ -38,18 +38,15 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may won't work<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png" width="410" height="310"><br>
-<br>
   <h4>Auto Reconnect</h4><br>
 &nbsp;&nbsp;&nbsp;&nbsp;Enable this to let it auto reconnect after disconnecte 15s (default)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can also change the waiting time in delay box<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can still manually reconnect by pressing hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
-<br>
   <h3>Extra features</h3>
   <h4>Click this button to manually operate network</h4><br><br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
-<br>
   <h4>Choose this to switch disconnect method to disable adapter</h4><br>
 &nbsp;&nbsp;&nbsp;&nbsp;There are two different approachs to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The default method is set to release IP address, its better to use, and faster to disconnect<br>
