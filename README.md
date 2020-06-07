@@ -39,16 +39,16 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may won't work<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png" width="410" height="310"><br>
-  <h4>Auto Reconnect</h4>
-&nbsp;&nbsp;&nbsp;&nbsp;Enable this to let it auto reconnect after disconnecte 15s (default)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;You can also change the waiting time in delay box<br>
-&nbsp;&nbsp;&nbsp;&nbsp;You can still manually reconnect by pressing hotkey again<br>
+<h4>Auto Reconnect</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;Enable this option to let it automatic reconnect after disconnect 15s (default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Change the waiting period in delay box<br>
+&nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
-<h3><ins>Extra features:</ins></h3>
-  <h4>Click this button to manually operate network</h4>
+<h4>Extra features</h4>
+<h5>Click these buttons to operate network through menu</h5>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
-  <h4>Choose this to switch disconnect method to disable adapter</h4>
+<h5>Choose disconnect approach</h5>
 &nbsp;&nbsp;&nbsp;&nbsp;There are two different approachs to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The default method is set to release IP address, its better to use, and faster to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The disable adapter method shown below is a backup method if the default one not work<br>
