@@ -5,9 +5,9 @@ This is a tool can disconnect internet use hotkey<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA"><br>
 <h3><ins>Usage:</ins></h3>
-&nbsp;&nbsp;&nbsp;&nbsp;Run the .exe file<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Select or check target network adapter name<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Run NetDisconnector.exe<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Check or select target network adapter name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;It'll disconnect immediately when press down hotkey<br>
 <br>
 <h3><ins>Things this tool can do:</ins></h3>
 <h4>Spin the Lucky Wheel</h4>
@@ -45,7 +45,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;You can still manually reconnect by pressing hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
-<h3>Extra features</h3>
+<h3><ins>Extra features:</ins></h3>
   <h4>Click this button to manually operate network</h4>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
   <h4>Choose this to switch disconnect method to disable adapter</h4>
