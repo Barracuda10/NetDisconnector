@@ -38,7 +38,8 @@ private:
 public:
 	CComboBox m_AdaptersList;
 	CString m_LogContent;
-	CEdit m_LogCtrl;
+	//CEdit m_LogCtrl;
+	CRichEditCtrl m_LogCtrl;
 	afx_msg void OnNetworkDisconnect();
 	afx_msg void OnNetworkConnect();
 	afx_msg void OnOptionsChangehotkey();
@@ -69,4 +70,9 @@ public:
 	afx_msg void OnOptionsAutoreconnect();
 	UINT AutoReconnectState;
 	int reconnectDelay;
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	int logWidthDiff;
+	int logHeightDiff;
+	int comboWidthDiff;
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 };

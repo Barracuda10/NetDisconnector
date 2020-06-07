@@ -39,6 +39,7 @@ BEGIN_MESSAGE_MAP(Record, CDialogEx)
 	ON_EN_SETFOCUS(IDC_MESSAGE, &Record::OnEnSetfocusMessage)
 	ON_BN_SETFOCUS(IDOK, &Record::OnBnSetfocusOk)
 	ON_WM_HELPINFO()
+	ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
 
@@ -161,4 +162,23 @@ void Record::OnBnSetfocusOk()
 BOOL Record::OnHelpInfo(HELPINFO* pHelpInfo)
 {
 	return TRUE;
+}
+
+
+BOOL Record::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+	if (pWnd == GetDlgItem(IDOK)) {
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+		return true;
+	}
+	if (pWnd == GetDlgItem(IDC_COVER)) {
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+		return true;
+	}
+	if (pWnd == GetDlgItem(IDC_MESSAGE)) {
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
+		return true;
+	}
+
+	return CDialogEx::OnSetCursor(pWnd, nHitTest, message);
 }

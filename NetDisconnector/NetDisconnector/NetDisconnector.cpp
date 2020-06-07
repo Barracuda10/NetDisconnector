@@ -49,8 +49,11 @@ BOOL CNetDisconnectorApp::InitInstance()
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
 
-	CWinApp::InitInstance();
+	AfxEnableControlContainer();
+	AfxInitRichEdit();
+	AfxInitRichEdit2();
 
+	CWinApp::InitInstance();
 
 	// Create the shell manager, in case the dialog contains
 	// any shell tree view or shell list view controls.

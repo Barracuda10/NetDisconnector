@@ -48,6 +48,9 @@ CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 	, get_modifiers(0)
 	, AutoReconnectState(0)
 	, reconnectDelay(0)
+	, logWidthDiff(0)
+	, logHeightDiff(0)
+	, comboWidthDiff(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 }
@@ -57,6 +60,7 @@ void CNetDisconnectorDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO, m_AdaptersList);
 	DDX_Text(pDX, IDC_LOG, m_LogContent);
+	DDX_Control(pDX, IDC_LOG, m_LogCtrl);
 	DDX_Control(pDX, IDC_LOG, m_LogCtrl);
 }
 
@@ -81,6 +85,8 @@ BEGIN_MESSAGE_MAP(CNetDisconnectorDlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_COMMAND(ID_HELP_MANUAL, &CNetDisconnectorDlg::OnHelpManual)
 	ON_COMMAND(ID_OPTIONS_AUTORECONNECT, &CNetDisconnectorDlg::OnOptionsAutoreconnect)
+	ON_WM_SIZE()
+	ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
 
@@ -98,12 +104,27 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	// TODO: Add extra initialization here
 
 
+	m_LogCtrl.SetBackgroundColor(false, RGB(12, 12, 12));
+	CHARFORMAT2 cf;
+	ZeroMemory(&cf, sizeof(cf));
+	cf.dwMask = CFM_COLOR | CFM_FACE | CFM_SIZE;
+	cf.dwEffects = CFE_BOLD;
+	cf.crTextColor = RGB(204, 204, 204);
+	cf.yHeight = 220;
+	StrCpyW(cf.szFaceName, _T("Calibri"));
+	m_LogCtrl.SetDefaultCharFormat(cf);
+	m_LogCtrl.SetTextMode(TM_PLAINTEXT);
+	m_LogCtrl.SetReadOnly(TRUE);
+	m_LogCtrl.HideCaret();
+	::HideCaret(GetDlgItem(IDC_LOG)->GetSafeHwnd());
+
+
 	LOGFONT lf;//Set font
-	memset(&lf, 0, sizeof(LOGFONT));
+	/*memset(&lf, 0, sizeof(LOGFONT));
 	lf.lfHeight = 18;
 	StrCpyW(lf.lfFaceName, L"Calibri");
 	m_font.CreateFontIndirect(&lf);
-	GetDlgItem(IDC_LOG)->SetFont(&m_font);
+	GetDlgItem(IDC_LOG)->SetFont(&m_font);*/
 
 
 	memset(&lf, 0, sizeof(LOGFONT));
@@ -199,7 +220,7 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 				AdaptersSet[dwIndex].ValuePnPInstanceId = ValueName;
 				AdaptersSet[dwIndex].PnPInstanceId = Value;
 			}
-			delete[]Value;//Release memory usage
+			delete[] Value;//Release memory usage
 			Value = NULL;
 			free(ValueName);//Release memory usage
 			ValueName = NULL;
@@ -259,7 +280,7 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 		m_LogContent += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
 	}
 	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 
 	DcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcSound"), MF_CHECKED);
@@ -287,6 +308,19 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 
 
 	GetDlgItem(IDC_LOG)->SetFocus();
+	
+
+	CRect rcParent;//Get control size differences
+	GetClientRect(&rcParent);
+
+	WINDOWPLACEMENT wndpl;
+
+	m_LogCtrl.GetWindowPlacement(&wndpl);
+	logWidthDiff = rcParent.Width() - wndpl.rcNormalPosition.right;
+	logHeightDiff = rcParent.Height() - wndpl.rcNormalPosition.bottom;
+	
+	m_AdaptersList.GetWindowPlacement(&wndpl);
+	comboWidthDiff = rcParent.Width() - wndpl.rcNormalPosition.right;
 
 	return FALSE;  // return TRUE  unless you set the focus to a control
 }
@@ -297,11 +331,11 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 
 void CNetDisconnectorDlg::OnPaint()
 {
-	CRect rec;
+	/*CRect rec;
 	CPaintDC dc(this);
 	GetDlgItem(IDC_LOG)->GetWindowRect(&rec);
 	ScreenToClient(&rec);
-	dc.FillSolidRect(rec, RGB(12, 12, 12));
+	dc.FillSolidRect(rec, RGB(12, 12, 12));*/
 
 	if (IsIconic())
 	{
@@ -353,19 +387,24 @@ void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 
 	m_LogContent += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter + _T("");
 	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
 
 void CNetDisconnectorDlg::OnCbnCloseupCombo()
 {
-	GetDlgItem(IDC_LOG)->SetFocus();
+	GetDlgItem(IDC_OLDLOG)->SetFocus();
 }
 
 
 void CNetDisconnectorDlg::OnEnSetfocusLog()
 {
-	::HideCaret(GetDlgItem(IDC_LOG)->GetSafeHwnd());
+	MSG msg;
+	PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+
+	m_LogCtrl.SetSel(-1, -1);
+	m_LogCtrl.HideCaret();
+	GetDlgItem(IDC_OLDLOG)->SetFocus();
 }
 
 
@@ -430,7 +469,7 @@ void CNetDisconnectorDlg::OnOptionsChangehotkey()
 		m_LogContent += _T("\r\n") + time + _T("Register hotkey failed!!!");
 	}
 	UpdateData(false);
-	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
 
@@ -459,7 +498,7 @@ void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 
 			m_LogContent += _T("\r\n") + time + _T("Auto reconnect disabled");
 			UpdateData(false);
-			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		}
 		else if (AutoReconnectState == BST_CHECKED) {
 			GetLocalTime(&systime);
@@ -467,7 +506,7 @@ void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 
 			m_LogContent += _T("\r\n") + time + _T("Auto reconnect enabled");
 			UpdateData(false);
-			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		}
 	}
 }
@@ -592,13 +631,15 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 		ZeroMemory(&pi, sizeof(pi));
 
 		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		delete[] temp;
+		temp = NULL;
 
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 		m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 		SetTimer(1, 15000, NULL);
 		waiting = !waiting;
@@ -610,7 +651,7 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 
 				m_LogContent += _T("\r\n") + time + _T("Disconnected");
 				UpdateData(false);
-				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 				break;
 			}
 			else if (timeout) {
@@ -621,7 +662,7 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 				m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
 				m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
 				UpdateData(false);
-				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 				timeout = !timeout;
 				break;
@@ -643,7 +684,7 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 		//	m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
 		//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 		//	UpdateData(false);
-		//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		//}
 
 		connection = !connection;
@@ -654,7 +695,7 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 
 		m_LogContent += _T("\r\n") + time + _T("Disconnected");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 }
 
@@ -686,13 +727,15 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 		ZeroMemory(&pi, sizeof(pi));
 
 		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		delete[] temp;
+		temp = NULL;
 
 		GetLocalTime(&systime);
 		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 		m_LogContent += _T("\r\n") + time + _T("Connecting...");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 		SetTimer(1, 15000, NULL);
 		waiting = !waiting;
@@ -704,7 +747,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 
 				m_LogContent += _T("\r\n") + time + _T("Connected");
 				UpdateData(false);
-				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 				break;
 			}
 			else if (timeout) {
@@ -715,7 +758,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 				m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
 				m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
 				UpdateData(false);
-				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 				timeout = !timeout;
 				break;
@@ -737,7 +780,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 		//	m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
 		//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 		//	UpdateData(false);
-		//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		//}
 
 		connection = !connection;
@@ -748,7 +791,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 
 		m_LogContent += _T("\r\n") + time + _T("Connected");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 }
 
@@ -805,13 +848,15 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			ZeroMemory(&pi, sizeof(pi));
 
 			CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+			delete[] temp;
+			temp = NULL;
 
 			GetLocalTime(&systime);
 			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 			m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
 			UpdateData(false);
-			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 			SetTimer(1, 15000, NULL);
 			waiting = !waiting;
@@ -830,7 +875,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 					m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
 					m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
 					UpdateData(false);
-					m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+					m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 					timeout = !timeout;
 					break;
@@ -852,7 +897,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			//	m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
 			//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 			//	UpdateData(false);
-			//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 			//}
 
 			if (AutoReconnectState == BST_CHECKED) {
@@ -863,7 +908,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 				temp.Format(_T("%d"), reconnectDelay / 1000);
 				m_LogContent += _T("\r\n") + time + _T("Auto reconnect after ") + temp + _T("s...");
 				UpdateData(false);
-				m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 				SetTimer(2, reconnectDelay, NULL);
 				return;
 			}
@@ -872,7 +917,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 
 			m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect");
 			UpdateData(false);
-			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		}
 		else {
 			connection = !connection;
@@ -897,13 +942,15 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			ZeroMemory(&pi, sizeof(pi));
 
 			CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+			delete[] temp;
+			temp = NULL;
 
 			GetLocalTime(&systime);
 			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 			m_LogContent += _T("\r\n") + time + _T("Connecting...");
 			UpdateData(false);
-			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 			SetTimer(1, 15000, NULL);
 			waiting = !waiting;
@@ -922,7 +969,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 					m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
 					m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
 					UpdateData(false);
-					m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+					m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 					timeout = !timeout;
 
@@ -946,7 +993,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 						temp.Format(_T("%d "), msg.message);
 					m_LogContent += _T("\r\n") + time + countdown + temp;
 					UpdateData(false);
-					m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);*/
+					m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);*/
 
 					DispatchMessage(&msg);
 				}
@@ -963,7 +1010,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			//	m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
 			//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 			//	UpdateData(false);
-			//	m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 			//}
 
 			GetLocalTime(&systime);
@@ -971,7 +1018,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 
 			m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() +_T(" to disconnect");
 			UpdateData(false);
-			m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		}
 	}
 	CDialogEx::OnHotKey(nHotKeyId, nKey1, nKey2);
@@ -1004,11 +1051,11 @@ HBRUSH CNetDisconnectorDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (pWnd->GetDlgCtrlID() == IDC_LOG) {
+	/*if (pWnd->GetDlgCtrlID() == IDC_LOG) {
 		pDC->SetTextColor(RGB(204, 204, 204));
 		pDC->SetBkColor(RGB(12, 12, 12));
 		hbr = m_brush;
-	}
+	}*/
 
 	// TODO:  在此更改 DC 的任何特性
 
@@ -1046,18 +1093,22 @@ void CNetDisconnectorDlg::PreInitDialog()
 {
 	WINDOWPLACEMENT wndpl;//Restore last window position
 	GetWindowPlacement(&wndpl);
-	wndpl.rcNormalPosition.left = AfxGetApp()->GetProfileInt(_T("Settings"), _T("WindowPosX"), 712);
-	wndpl.rcNormalPosition.top = AfxGetApp()->GetProfileInt(_T("Settings"), _T("WindowPosY"), 328);
+	RECT workarea;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
+	CRect dlgrect;
+	GetWindowRect(dlgrect);//Dialog Original Size 506*384
+
+	wndpl.rcNormalPosition.left = AfxGetApp()->GetProfileInt(_T("Settings"), _T("WindowPosX"), (workarea.right - dlgrect.Width()) / 2);
+	wndpl.rcNormalPosition.top = AfxGetApp()->GetProfileInt(_T("Settings"), _T("WindowPosY"), (workarea.bottom - dlgrect.Height()) / 2);
 	if (wndpl.rcNormalPosition.left < 0)
 		wndpl.rcNormalPosition.left = 0;
 	if (wndpl.rcNormalPosition.top < 0)
 		wndpl.rcNormalPosition.top = 0;
-	RECT workarea;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &workarea, 0);
-	wndpl.rcNormalPosition.left = min(workarea.right - 506, wndpl.rcNormalPosition.left + workarea.left);
-	wndpl.rcNormalPosition.top = min(workarea.bottom - 384, wndpl.rcNormalPosition.top + workarea.top);
-	wndpl.rcNormalPosition.right = 506 + wndpl.rcNormalPosition.left;
-	wndpl.rcNormalPosition.bottom = 384 + wndpl.rcNormalPosition.top;
+	wndpl.rcNormalPosition.left = min(workarea.right - dlgrect.Width(), wndpl.rcNormalPosition.left + workarea.left);
+	wndpl.rcNormalPosition.top = min(workarea.bottom - dlgrect.Height(), wndpl.rcNormalPosition.top + workarea.top);
+
+	wndpl.rcNormalPosition.right = dlgrect.Width() + wndpl.rcNormalPosition.left;
+	wndpl.rcNormalPosition.bottom = dlgrect.Height() + wndpl.rcNormalPosition.top;
 	SetWindowPlacement(&wndpl);
 
 	CDialogEx::PreInitDialog();
@@ -1086,7 +1137,7 @@ void CNetDisconnectorDlg::OnOptionsDisconnectsound()
 
 		m_LogContent += _T("\r\n") + time + _T("Notification sound turned off");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 	else if (menu->GetMenuState(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
 		DcSoundState = MF_CHECKED;
@@ -1097,7 +1148,7 @@ void CNetDisconnectorDlg::OnOptionsDisconnectsound()
 
 		m_LogContent += _T("\r\n") + time + _T("Notification sound turned on");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 }
 
@@ -1118,7 +1169,7 @@ void CNetDisconnectorDlg::OnOptionsReconnectsound()
 
 		m_LogContent += _T("\r\n") + time + _T("Notification sound turned off");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 	else if (menu->GetMenuState(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
 		RcSoundState = MF_CHECKED;
@@ -1129,7 +1180,7 @@ void CNetDisconnectorDlg::OnOptionsReconnectsound()
 
 		m_LogContent += _T("\r\n") + time + _T("Notification sound turned on");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 }
 
@@ -1147,7 +1198,7 @@ void CNetDisconnectorDlg::OnOptionsReleaseipaddress()
 
 		m_LogContent += _T("\r\n") + time + _T("Disconnect method switch to Release IP address");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 
 	menu->CheckMenuRadioItem(6, 7, 6, MF_BYPOSITION);
@@ -1168,7 +1219,7 @@ void CNetDisconnectorDlg::OnOptionsDisableadapter()
 
 		m_LogContent += _T("\r\n") + time + _T("Disconnect method switch to Disable adapter");
 		UpdateData(false);
-		m_LogCtrl.LineScroll(m_LogCtrl.GetLineCount(), 0);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 
 	menu->CheckMenuRadioItem(6, 7, 7, MF_BYPOSITION);
@@ -1178,17 +1229,22 @@ void CNetDisconnectorDlg::OnOptionsDisableadapter()
 
 void CNetDisconnectorDlg::OnHelpManual()
 {
-	CWnd* pWnd = FindWindow(0, _T("Manual"));
+	CWnd* pWnd = FindWindow(_T("NetDisconnectorUsage"), _T("Usage"));
 	if (!pWnd) {
 		pManual = new Manual();
 		pManual->Create(IDD_MANUAL_DIALOG, GetDesktopWindow());
 		WINDOWPLACEMENT wndpl, wndpl_parent;
 		GetWindowPlacement(&wndpl_parent);
 		pManual->GetWindowPlacement(&wndpl);
-		wndpl.rcNormalPosition.left = wndpl_parent.rcNormalPosition.left + 16;
-		wndpl.rcNormalPosition.top = wndpl_parent.rcNormalPosition.top + 36;
-		wndpl.rcNormalPosition.right = wndpl.rcNormalPosition.left + 474;
-		wndpl.rcNormalPosition.bottom = wndpl.rcNormalPosition.top + 312;
+		CRect dlgrect_parent;
+		GetWindowRect(dlgrect_parent);//Parent Dialog Original Size 506*384
+		CRect dlgrect;
+		pManual->GetWindowRect(dlgrect);//Manual Dialog Original Size 474*312
+
+		wndpl.rcNormalPosition.left = wndpl_parent.rcNormalPosition.left + fabs((dlgrect_parent.Width() - dlgrect.Width()) / 2);
+		wndpl.rcNormalPosition.top = wndpl_parent.rcNormalPosition.top + fabs((dlgrect_parent.Height() - dlgrect.Height()) / 2);
+		wndpl.rcNormalPosition.right = wndpl.rcNormalPosition.left + dlgrect.Width();
+		wndpl.rcNormalPosition.bottom = wndpl.rcNormalPosition.top + dlgrect.Height();
 
 		pManual->SetWindowPlacement(&wndpl);
 		pManual->ShowWindow(SW_SHOW);
@@ -1222,4 +1278,37 @@ void CNetDisconnectorDlg::OnHelpManual()
 	pManual->SetWindowPlacement(&wndpl);
 	pManual->ShowWindow(SW_SHOW);
 	pManual->SetFocus();*/
+}
+
+
+void CNetDisconnectorDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	if (m_LogCtrl.m_hWnd != NULL) {
+		WINDOWPLACEMENT wndpl;
+		m_LogCtrl.GetWindowPlacement(&wndpl);
+
+		wndpl.rcNormalPosition.right = cx - logWidthDiff;
+		wndpl.rcNormalPosition.bottom = cy - logHeightDiff;
+
+		m_LogCtrl.SetWindowPlacement(&wndpl);
+		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+	}
+	if (m_AdaptersList.m_hWnd != NULL) {
+		WINDOWPLACEMENT wndpl;
+		m_AdaptersList.GetWindowPlacement(&wndpl);
+
+		wndpl.rcNormalPosition.right = cx - comboWidthDiff;
+
+		m_AdaptersList.SetWindowPlacement(&wndpl);
+	}
+}
+
+
+BOOL CNetDisconnectorDlg::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+	m_LogCtrl.HideCaret();
+
+	return CDialogEx::OnSetCursor(pWnd, nHitTest, message);
 }

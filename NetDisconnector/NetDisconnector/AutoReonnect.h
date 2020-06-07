@@ -30,4 +30,6 @@ public:
 	CFont m_font;
 	CFont m_font_2;
 	afx_msg void OnEnChangeDelay();
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+	CEdit m_delayCtrl;
 };

@@ -37,4 +37,5 @@ public:
 	afx_msg void OnBnSetfocusOk();
 	CEdit m_MessageCtrl;
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 };
