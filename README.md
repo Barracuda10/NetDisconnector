@@ -10,7 +10,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
 
 <h3>Things this tool can do:</h3>
-&nbsp;&nbsp;<h4>Spin the Lucky Wheel</h4><br>
+&nbsp;&nbsp;<h4>Spin the Lucky Wheel</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Start GTA5 with VPN or proxy enabled<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Wait game complete Initializing Social Club<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Join a Invite Only Session and go to Lucky Wheel<br>
@@ -18,14 +18,12 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect if it's not car<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, Also if use this method i recommand use macro to do it<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is use the left stick of controller, first hold it up when game show Use S to Spin message then wait few seconds hold it fully down<br>
-<br>
-&nbsp;&nbsp;<h4>Make solo Public Session</h4><br>
+&nbsp;&nbsp;<h4>Make solo Public Session</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnecting time)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnecting time, it means this time must subtract around 3s reconnecting time<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out at offline 15s<br>
-<br>
-&nbsp;&nbsp;<h4>Other Things</h4><br>
+&nbsp;&nbsp;<h4>Other Things</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
 
 <h3>Note:</h3>
@@ -35,7 +33,6 @@ This is a tool can disconnect internet use hotkey<br>
   HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 </details>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
-<br>
 <br>
   <h2>Features</h2>
   <h4>Change Hotkey</h4>
