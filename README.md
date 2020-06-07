@@ -8,7 +8,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Run the .exe file<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Select or check target network adapter name<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It'll immediately disconnect when press down hotkey<br>
-
+<br>
 <h3>Things this tool can do:</h3>
 <h4>Spin the Lucky Wheel</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Start GTA5 with VPN or proxy enabled<br>
@@ -28,8 +28,7 @@ This is a tool can disconnect internet use hotkey<br>
 
 <h3>Note:</h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry
-&nbsp;&nbsp;&nbsp;&nbsp;<details><summary>Registry path:</summary>
+&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<details><summary>Registry path:</summary>
 &nbsp;&nbsp;&nbsp;&nbsp;HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 </details>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
