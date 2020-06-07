@@ -24,8 +24,8 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnecting time, it means this time must subtract around 3s reconnecting time<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out at offline 15s<br>
 <h4>Other Things</h4>
-&nbsp;&nbsp;-&nbsp;&nbsp;You can also prevent game save unwanted progress using this<br>
-
+&nbsp;&nbsp;-&nbsp;&nbsp;Disconnect network to prevent game save unwanted progress<br>
+<br>
 <h3>Note:</h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<details><summary>Registry path:</summary>
