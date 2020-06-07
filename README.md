@@ -46,9 +46,9 @@ This is a tool can disconnect internet use hotkey<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
 <h4>Extra features</h4>
-<h5>Click these buttons to operate network through menu</h5>
+<h5>&nbsp;&nbsp;&nbsp;&nbsp;Click these buttons to operate network through menu</h5>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
-<h5>Choose disconnect approach</h5>
+<h5>&nbsp;&nbsp;&nbsp;&nbsp;Choose disconnect approach</h5>
 &nbsp;&nbsp;&nbsp;&nbsp;There are two different approachs to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The default method is set to release IP address, its better to use, and faster to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The disable adapter method shown below is a backup method if the default one not work<br>
