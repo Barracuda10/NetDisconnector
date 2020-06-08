@@ -2,6 +2,7 @@
 This is a tool can disconnect internet use hotkey<br>
 <br>
 [<ins>[Version 3] Download here...</ins>](https://github.com/Barracuda10/NetDisconnector/releases/download/1.2/NetDisconnector.exe)<br>
+[<ins>Download not yet release version here...</ins>](https://raw.githubusercontent.com/Barracuda10/NetDisconnector/master/NetDisconnector/x64/Release/NetDisconnector.exe)<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA"><br>
 <h3><ins>Usage:</ins></h3>
@@ -28,7 +29,7 @@ This is a tool can disconnect internet use hotkey<br>
 <br>
 <h3><ins>Note:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<details><summary>Registry path:</summary>
+&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<details><summary>See registry path</summary>
 &nbsp;&nbsp;&nbsp;&nbsp;HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 </details>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
