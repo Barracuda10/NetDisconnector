@@ -60,7 +60,7 @@ BOOL Manual::OnInitDialog()
 	m_content += "        -  Start GTA5 with VPN or proxy enabled\r\n";
 	m_content += "        -  Wait game complete Initializing Social Club\r\n";
 	m_content += "        -  Join a Invite Only Session and go to Lucky Wheel\r\n";
-	m_content += "        -  Wait 4 seconds to press S after game show Use S to Spin message\r\n";
+	m_content += "        -  Wait 4.65 seconds to press S after game show Use S to Spin prompt\r\n";
 	m_content += "        -  Press hotkey (default PAUSE key) to disconnect if it's not car\r\n";
 	m_content += "\r\n    Make solo Public Session\r\n";
 	m_content += "        -  Press hotkey (default PAUSE key) to disconnect\r\n";

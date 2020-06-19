@@ -12,14 +12,14 @@
 #endif
 
 
-//These headers use to get adaptors
-//#include <winsock2.h>
-//#include <iphlpapi.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#pragma comment(lib, "IPHLPAPI.lib")
-//#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
-//#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+//These headers use to get adapters
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#pragma comment(lib, "IPHLPAPI.lib")
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
 //These header use to access other dialogs
 #include "Record.h"
@@ -51,6 +51,8 @@ CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 	, logWidthDiff(0)
 	, logHeightDiff(0)
 	, comboWidthDiff(0)
+	, AdapterCurrent(0)
+	//, connection(true)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 }
@@ -88,6 +90,23 @@ BEGIN_MESSAGE_MAP(CNetDisconnectorDlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
+
+
+struct AdaptersSet {
+	CString AdapterNameToMatch;
+	CString Description;
+	CString IpAddress;
+	CString Gateway;
+	//CString CConnection = _T("Connected");
+	BOOL Connection = true;
+
+	CString AdapterName;
+	CString ValueName;
+	CString ConnectionName;
+	CString ValuePnPInstanceId;
+	CString PnPInstanceId;
+}AdaptersSet[32];
+int aIndex = 0;
 
 
 // CNetDisconnectorDlg message handlers
@@ -133,8 +152,25 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	GetDlgItem(IDC_COMBO)->SetFont(&m_font_2);
 
 
+	//struct AdaptersSet {
+	//	CString AdapterNameToMatch;
+	//	CString Description;
+	//	CString IpAddress;
+	//	CString Gateway;
+	//	//CString CConnection = _T("Connected");
+	//	BOOL Connection = true;
+
+	//	CString AdapterName;
+	//	CString ValueName;
+	//	CString ConnectionName;
+	//	CString ValuePnPInstanceId;
+	//	CString PnPInstanceId;
+	//}AdaptersSet[32];
+	//int aIndex = 0;
+
+
 	//GetAdaptersInfo
-	/*PIP_ADAPTER_INFO pAdapterInfo;
+	PIP_ADAPTER_INFO pAdapterInfo;
 	PIP_ADAPTER_INFO pAdapter = NULL;
 	DWORD dwRetVal = 0;
 	UINT i;
@@ -151,14 +187,21 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
 		pAdapter = pAdapterInfo;
 		while (pAdapter) {
-			CString temp;
-			temp.Format(_T("%S"), pAdapter->Description);
-			m_AdaptersList.AddString(temp);//Add adaptors to combobox
+			AdaptersSet[aIndex].AdapterNameToMatch = pAdapter->AdapterName;
+			AdaptersSet[aIndex].Description = pAdapter->Description;
+			AdaptersSet[aIndex].IpAddress = pAdapter->IpAddressList.IpAddress.String;
+			AdaptersSet[aIndex].Gateway = pAdapter->GatewayList.IpAddress.String;
+			if (AdaptersSet[aIndex].Gateway == "0.0.0.0") {
+				AdaptersSet[aIndex].Connection = false;
+				//AdaptersSet[aIndex].CConnection = "Disconnected";
+			}
+			aIndex++;
+
 			pAdapter = pAdapter->Next;
 		}
 	}
 	if (pAdapterInfo)//Release memory usage
-		FREE(pAdapterInfo);*/
+		FREE(pAdapterInfo);
 
 
 
@@ -173,61 +216,112 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 		return 1;
 	}
 	for (DWORD dwIndex = 0;dwIndex < SubpathNum; dwIndex++) {
-		struct AdaptersSet {
+		/*struct AdaptersSet {
 			CString AdapterName;
 			CString ValueName;
 			CString ConnectionName;
 			CString ValuePnPInstanceId;
 			CString PnPInstanceId;
-		}AdaptersSet[50];
+		}AdaptersSet[50];*/
 		DWORD Namesize = SubpathLen++;
 		LPSTR Subpath = new char[Namesize];
 		RegEnumKeyExA(phkResult, dwIndex, Subpath, &Namesize, NULL, NULL, NULL, NULL);
 		if (!strcmp(Subpath, "Descriptions")) {
 			continue;
 		}
-		AdaptersSet[dwIndex].AdapterName = Subpath;
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			AdaptersSet[matchIndex].AdapterName = Subpath;
+			if (AdaptersSet[matchIndex].AdapterName == AdaptersSet[matchIndex].AdapterNameToMatch) {
+				CString newPath = _T("SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\") + AdaptersSet[matchIndex].AdapterName + "\\Connection";
+				HKEY phkResult;
+				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, newPath, 0, KEY_READ | KEY_WOW64_64KEY, &phkResult)) {
+					return 1;
+				}
+				DWORD ValueNum, wValueNameLen, bValueLen;
+				if (RegQueryInfoKey(phkResult, NULL, NULL, 0, NULL, NULL, NULL, &ValueNum, &wValueNameLen, &bValueLen, NULL, NULL)) {//Get connection infos
+					return 1;
+				}
+				for (DWORD dwIndex_2 = 0; dwIndex_2 < ValueNum; dwIndex_2++) {
+					DWORD ValueNameLen = ++wValueNameLen;
+					DWORD ValueLen = ++bValueLen;
+					LPSTR ValueName = (LPSTR)malloc(ValueNameLen);
+					LPBYTE bValue = (LPBYTE)malloc(ValueLen);
+					if (RegEnumValueA(phkResult, dwIndex_2, ValueName, &ValueNameLen, NULL, NULL, bValue, &ValueLen)) {//Enum connection names
+						return 1;
+					}
+					size_t BufferSize = MultiByteToWideChar(CP_ACP, 0, (char*)bValue, strlen((char*)bValue), NULL, 0);
+					WCHAR* Value = new WCHAR[BufferSize + 1];
+					MultiByteToWideChar(CP_ACP, 0, (char*)bValue, strlen((char*)bValue), Value, BufferSize);
+					Value[BufferSize] = '\0';
+					free(bValue);//Release memory usage
+					bValue = NULL;
+					if ((CString)ValueName == "Name") {
+						AdaptersSet[matchIndex].ValueName = ValueName;
+						AdaptersSet[matchIndex].ConnectionName = Value;
+					}
+					else if ((CString)ValueName == "PnPInstanceId" || (CString)ValueName == "PnpInstanceID") {
+						AdaptersSet[matchIndex].ValuePnPInstanceId = ValueName;
+						AdaptersSet[matchIndex].PnPInstanceId = Value;
+					}
+					delete[] Value;//Release memory usage
+					Value = NULL;
+					free(ValueName);//Release memory usage
+					ValueName = NULL;
+				}
+				if (AdaptersSet[matchIndex].PnPInstanceId.Left(4) == "PCI\\" || AdaptersSet[matchIndex].PnPInstanceId.Left(4) == "ROOT") {
+					//m_AdaptersList.AddString(AdaptersSet[matchIndex].ConnectionName + _T(" | ") + AdaptersSet[matchIndex].Description + _T(" | ") + AdaptersSet[matchIndex].Gateway + _T(" | ") + AdaptersSet[matchIndex].CConnection);//Add Connections to combobox
+					m_AdaptersList.AddString(AdaptersSet[matchIndex].ConnectionName);
+				}
+				matchIndex = aIndex;
+			}
+		}
 		delete[] Subpath;//Release memory usage
 		Subpath = NULL;
-		CString newPath = _T("SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\") + AdaptersSet[dwIndex].AdapterName + "\\Connection";
-		HKEY phkResult;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, newPath, 0, KEY_READ | KEY_WOW64_64KEY, &phkResult)) {
-			return 1;
-		}
-		DWORD ValueNum, wValueNameLen, bValueLen;
-		if (RegQueryInfoKey(phkResult, NULL, NULL, 0, NULL, NULL, NULL, &ValueNum, &wValueNameLen, &bValueLen, NULL, NULL)) {//Get connection infos
-			return 1;
-		}
-		for (DWORD dwIndex_2 = 0;dwIndex_2 < ValueNum;dwIndex_2++) {
-			DWORD ValueNameLen = ++wValueNameLen;
-			DWORD ValueLen = ++bValueLen;
-			LPSTR ValueName = (LPSTR)malloc(ValueNameLen);
-			LPBYTE bValue = (LPBYTE)malloc(ValueLen);
-			if (RegEnumValueA(phkResult, dwIndex_2, ValueName, &ValueNameLen, NULL, NULL, bValue, &ValueLen)) {//Enum connection names
-				return 1;
-			}
-			size_t BufferSize = MultiByteToWideChar(CP_ACP, 0, (char*)bValue, strlen((char*)bValue), NULL, 0);
-			WCHAR* Value = new WCHAR[BufferSize + 1];
-			MultiByteToWideChar(CP_ACP, 0, (char*)bValue, strlen((char*)bValue), Value, BufferSize);
-			Value[BufferSize] = '\0';
-			free(bValue);//Release memory usage
-			bValue = NULL;
-			if ((CString)ValueName == "Name") {
-				AdaptersSet[dwIndex].ValueName = ValueName;
-				AdaptersSet[dwIndex].ConnectionName = Value;
-			}
-			else if ((CString)ValueName == "PnPInstanceId" || (CString)ValueName == "PnpInstanceID") {
-				AdaptersSet[dwIndex].ValuePnPInstanceId = ValueName;
-				AdaptersSet[dwIndex].PnPInstanceId = Value;
-			}
-			delete[] Value;//Release memory usage
-			Value = NULL;
-			free(ValueName);//Release memory usage
-			ValueName = NULL;
-		}
-		if (AdaptersSet[dwIndex].PnPInstanceId.Left(4) == "PCI\\" || AdaptersSet[dwIndex].PnPInstanceId.Left(4) == "ROOT") {
-			m_AdaptersList.AddString(AdaptersSet[dwIndex].ConnectionName);//Add Connections to combobox
-		}
+
+		//AdaptersSet[dwIndex].AdapterName = Subpath;
+		//delete[] Subpath;//Release memory usage
+		//Subpath = NULL;
+
+		//CString newPath = _T("SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\") + AdaptersSet[dwIndex].AdapterName + "\\Connection";
+		//HKEY phkResult;
+		//if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, newPath, 0, KEY_READ | KEY_WOW64_64KEY, &phkResult)) {
+		//	return 1;
+		//}
+		//DWORD ValueNum, wValueNameLen, bValueLen;
+		//if (RegQueryInfoKey(phkResult, NULL, NULL, 0, NULL, NULL, NULL, &ValueNum, &wValueNameLen, &bValueLen, NULL, NULL)) {//Get connection infos
+		//	return 1;
+		//}
+		//for (DWORD dwIndex_2 = 0;dwIndex_2 < ValueNum;dwIndex_2++) {
+		//	DWORD ValueNameLen = ++wValueNameLen;
+		//	DWORD ValueLen = ++bValueLen;
+		//	LPSTR ValueName = (LPSTR)malloc(ValueNameLen);
+		//	LPBYTE bValue = (LPBYTE)malloc(ValueLen);
+		//	if (RegEnumValueA(phkResult, dwIndex_2, ValueName, &ValueNameLen, NULL, NULL, bValue, &ValueLen)) {//Enum connection names
+		//		return 1;
+		//	}
+		//	size_t BufferSize = MultiByteToWideChar(CP_ACP, 0, (char*)bValue, strlen((char*)bValue), NULL, 0);
+		//	WCHAR* Value = new WCHAR[BufferSize + 1];
+		//	MultiByteToWideChar(CP_ACP, 0, (char*)bValue, strlen((char*)bValue), Value, BufferSize);
+		//	Value[BufferSize] = '\0';
+		//	free(bValue);//Release memory usage
+		//	bValue = NULL;
+		//	if ((CString)ValueName == "Name") {
+		//		AdaptersSet[dwIndex].ValueName = ValueName;
+		//		AdaptersSet[dwIndex].ConnectionName = Value;
+		//	}
+		//	else if ((CString)ValueName == "PnPInstanceId" || (CString)ValueName == "PnpInstanceID") {
+		//		AdaptersSet[dwIndex].ValuePnPInstanceId = ValueName;
+		//		AdaptersSet[dwIndex].PnPInstanceId = Value;
+		//	}
+		//	delete[] Value;//Release memory usage
+		//	Value = NULL;
+		//	free(ValueName);//Release memory usage
+		//	ValueName = NULL;
+		//}
+		//if (AdaptersSet[dwIndex].PnPInstanceId.Left(4) == "PCI\\" || AdaptersSet[dwIndex].PnPInstanceId.Left(4) == "ROOT") {
+		//	m_AdaptersList.AddString(AdaptersSet[dwIndex].AdapterName);//Add AdapterName to combobox
+		//	m_AdaptersList.AddString(AdaptersSet[dwIndex].ConnectionName);//Add Connections to combobox
+		//}
 	}
 
 
@@ -236,6 +330,12 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	get_adapter = AfxGetApp()->GetProfileString(_T("Settings"), _T("Adapter"), NULL);//Get default adaptor
 	int pos = m_AdaptersList.FindStringExact(0, get_adapter);
 	if (pos == -1) {
+		/*for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (get_adapter == AdaptersSet[matchIndex].Connection) {
+				pos = matchIndex;
+				break;
+			}
+		}*/
 		pos = m_AdaptersList.FindStringExact(0, _T("Local Area Connection"));//If pos eqaul to NULL, search for default adaptor
 		if (pos == -1) {
 			pos = m_AdaptersList.FindStringExact(0, _T("本地连接"));
@@ -277,7 +377,18 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	}
 	else {
 		get_hotkey = AfxGetApp()->GetProfileString(_T("Settings"), _T("Key"), _T("Pause"));//Get hotkey string
-		m_LogContent += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (get_adapter == AdaptersSet[matchIndex].ConnectionName) {
+				AdapterCurrent = matchIndex;
+				break;
+			}
+		}
+		if (AdaptersSet[AdapterCurrent].Connection) {
+			m_LogContent += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+		}
+		else {
+			m_LogContent += time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+		}
 	}
 	UpdateData(false);
 	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
@@ -368,17 +479,38 @@ HCURSOR CNetDisconnectorDlg::OnQueryDragIcon()
 }
 
 
-static bool connection = true;
+//static bool connection = true;
 static bool timeout = false;
 static bool waiting = false;
+static bool reconnectCountdown = false;
+int AdapterWaitingforchange = -1;
 
 
 void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 {
 	UpdateData(true);
 
+	if (reconnectCountdown) {
+		CString adapterTemp;
+		m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), adapterTemp);
+		//connection = true;
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (adapterTemp == AdaptersSet[matchIndex].ConnectionName) {
+				AdapterWaitingforchange = matchIndex;
+				break;
+			}
+		}
+		return;
+	}
+
 	m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Get adaptor name
-	connection = true;
+	//connection = true;
+	for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+		if (get_adapter == AdaptersSet[matchIndex].ConnectionName) {
+			AdapterCurrent = matchIndex;
+			break;
+		}
+	}
 
 	SYSTEMTIME systime;
 	CString time;
@@ -386,6 +518,14 @@ void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 	m_LogContent += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter + _T("");
+
+	if (AdaptersSet[AdapterCurrent].Connection) {
+		m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+	}
+	else {
+		m_LogContent += _T("\r\n") + time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+	}
+
 	UpdateData(false);
 	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 }
@@ -610,7 +750,7 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 	CString time;
 
 
-	if (connection) {
+	if (AdaptersSet[AdapterCurrent].Connection) {
 		CString release;
 		if (DcMethod == 0) {
 			release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
@@ -687,7 +827,7 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 		//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		//}
 
-		connection = !connection;
+		AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
 	}
 	else {
 		GetLocalTime(&systime);
@@ -706,7 +846,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 	SYSTEMTIME systime;
 	CString time;
 
-	if (!connection) {
+	if (!AdaptersSet[AdapterCurrent].Connection) {
 		CString renew;
 		if (DcMethod == 0) {
 			renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
@@ -783,7 +923,7 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 		//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		//}
 
-		connection = !connection;
+		AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
 	}
 	else {
 		GetLocalTime(&systime);
@@ -825,8 +965,8 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 		}*/
 
 
-		if (connection) {
-			connection = !connection;
+		if (AdaptersSet[AdapterCurrent].Connection) {
+			AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
 
 			CString release;
 			if(DcMethod == 0) {
@@ -909,7 +1049,10 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 				m_LogContent += _T("\r\n") + time + _T("Auto reconnect after ") + temp + _T("s...");
 				UpdateData(false);
 				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+				
 				SetTimer(2, reconnectDelay, NULL);
+				reconnectCountdown = true;
+
 				return;
 			}
 			GetLocalTime(&systime);
@@ -920,7 +1063,7 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		}
 		else {
-			connection = !connection;
+			AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
 
 			CString renew;
 			if (DcMethod == 0) {
@@ -944,6 +1087,8 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 			delete[] temp;
 			temp = NULL;
+
+			reconnectCountdown = false;
 
 			GetLocalTime(&systime);
 			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
@@ -1013,6 +1158,30 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 			//}
 
+			if (AdapterWaitingforchange != -1) {
+				m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Get adaptor name
+				AdapterCurrent = AdapterWaitingforchange;
+				AdapterWaitingforchange = -1;
+
+				SYSTEMTIME systime;
+				CString time;
+				GetLocalTime(&systime);
+				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+				m_LogContent += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter + _T("");
+
+				if (AdaptersSet[AdapterCurrent].Connection) {
+					m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+				}
+				else {
+					m_LogContent += _T("\r\n") + time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+				}
+
+				UpdateData(false);
+				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+
+				return;
+			}
 			GetLocalTime(&systime);
 			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
@@ -1034,7 +1203,7 @@ void CNetDisconnectorDlg::OnTimer(UINT_PTR nIDEvent)
 		timeout = !timeout;
 	case 2:
 		KillTimer(2);
-		if (!connection) {
+		if (!AdaptersSet[AdapterCurrent].Connection) {
 			if (!waiting) {
 				OnHotKey(1, 0, 0);
 			}
