@@ -330,25 +330,25 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	get_adapter = AfxGetApp()->GetProfileString(_T("Settings"), _T("Adapter"), NULL);//Get default adaptor
 	int pos = m_AdaptersList.FindStringExact(0, get_adapter);
 	if (pos == -1) {
-		/*for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
-			if (get_adapter == AdaptersSet[matchIndex].Connection) {
-				pos = matchIndex;
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (AdaptersSet[matchIndex].Connection) {
+				pos = m_AdaptersList.FindStringExact(0, AdaptersSet[matchIndex].ConnectionName);
 				break;
 			}
-		}*/
-		pos = m_AdaptersList.FindStringExact(0, _T("Local Area Connection"));//If pos eqaul to NULL, search for default adaptor
-		if (pos == -1) {
-			pos = m_AdaptersList.FindStringExact(0, _T("本地连接"));
-			if (pos == -1) {
-				pos = m_AdaptersList.FindStringExact(0, _T("Wi-Fi"));
-				if (pos == -1) {
-					pos = m_AdaptersList.FindStringExact(0, _T("WLAN"));
-					if (pos == -1) {
-						pos = 0;//If cant find default adapter, set it to first one
-					}
-				}
-			}
 		}
+		//pos = m_AdaptersList.FindStringExact(0, _T("Local Area Connection"));//If pos eqaul to NULL, search for default adaptor
+		//if (pos == -1) {
+		//	pos = m_AdaptersList.FindStringExact(0, _T("BDLJ"));
+		//	if (pos == -1) {
+		//		pos = m_AdaptersList.FindStringExact(0, _T("Wi-Fi"));
+		//		if (pos == -1) {
+		//			pos = m_AdaptersList.FindStringExact(0, _T("WLAN"));
+		//			if (pos == -1) {
+		//				pos = 0;//If cant find default adapter, set it to first one
+		//			}
+		//		}
+		//	}
+		//}
 	}
 	m_AdaptersList.SetCurSel(pos);//Set selected adaptor
 	m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Save current select to value get_adapter
@@ -1226,9 +1226,9 @@ HBRUSH CNetDisconnectorDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		hbr = m_brush;
 	}*/
 
-	// TODO:  在此更改 DC 的任何特性
+	// TODO:  Change any attributes of the DC here
 
-	// TODO:  如果默认的不是所需画笔，则返回另一个画笔
+	// TODO:  Return a different brush if the default is not desired
 	return hbr;
 }
 

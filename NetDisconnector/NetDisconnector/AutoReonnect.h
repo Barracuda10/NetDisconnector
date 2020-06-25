@@ -2,23 +2,23 @@
 #include "afxwin.h"
 
 
-// AutoReonnect 对话框
+// AutoReonnect dialog
 
 class AutoReonnect : public CDialogEx
 {
 	DECLARE_DYNAMIC(AutoReonnect)
 
 public:
-	AutoReonnect(CWnd* pParent = NULL);   // 标准构造函数
+	AutoReonnect(CWnd* pParent = NULL);   // standard constructor
 	virtual ~AutoReonnect();
 
-// 对话框数据
+// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_AUTORECONNECT_DIALOG };
 #endif
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:

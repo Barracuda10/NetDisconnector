@@ -2,25 +2,25 @@
 #include "afxwin.h"
 
 
-// Manual 对话框
+// Manual dialog
 
 class Manual : public CDialogEx
 {
 	DECLARE_DYNAMIC(Manual)
 
 public:
-	Manual(CWnd* pParent = NULL);   // 标准构造函数
+	Manual(CWnd* pParent = NULL);   // standard constructor
 	virtual ~Manual();
 private:
 	Manual *pManual;
 
-// 对话框数据
+// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_MANUAL_DIALOG };
 #endif
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:

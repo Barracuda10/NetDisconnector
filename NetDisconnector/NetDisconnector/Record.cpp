@@ -1,4 +1,4 @@
-// Record.cpp : 实现文件
+// Record.cpp : implementation file
 //
 
 #include "stdafx.h"
@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 
 
-// Record 对话框
+// Record dialog
 
 IMPLEMENT_DYNAMIC(Record, CDialogEx)
 
@@ -43,7 +43,7 @@ BEGIN_MESSAGE_MAP(Record, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// Record 消息处理程序
+// Record message handlers
 
 
 void Record::OnBnClickedOk()
@@ -84,7 +84,7 @@ BOOL Record::OnInitDialog()
 	UpdateData(false);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-				  // 异常: OCX 属性页应返回 FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 

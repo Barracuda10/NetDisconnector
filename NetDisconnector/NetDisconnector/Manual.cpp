@@ -1,4 +1,4 @@
-// Manual.cpp : 实现文件
+// Manual.cpp : implementation file
 //
 
 #include "stdafx.h"
@@ -8,7 +8,7 @@
 #include "afxdialogex.h"
 
 
-// Manual 对话框
+// Manual dialog
 
 IMPLEMENT_DYNAMIC(Manual, CDialogEx)
 
@@ -41,7 +41,7 @@ BEGIN_MESSAGE_MAP(Manual, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// Manual 消息处理程序
+// Manual message handlers
 
 
 BOOL Manual::OnInitDialog()
@@ -87,7 +87,7 @@ BOOL Manual::OnInitDialog()
 	m_contentCtrl.LineScroll(-1 * m_contentCtrl.GetLineCount(), 0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-				  // 异常: OCX 属性页应返回 FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 

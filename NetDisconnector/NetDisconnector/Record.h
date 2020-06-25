@@ -3,23 +3,23 @@
 #include "afxwin.h"
 
 
-// Record 对话框
+// Record dialog
 
 class Record : public CDialogEx
 {
 	DECLARE_DYNAMIC(Record)
 
 public:
-	Record(CWnd* pParent = NULL);   // 标准构造函数
+	Record(CWnd* pParent = NULL);   // standard constructor
 	virtual ~Record();
 
-// 对话框数据
+// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_RECORD_DIALOG };
 #endif
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:

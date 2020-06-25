@@ -1,4 +1,4 @@
-// AutoReonnect.cpp : 实现文件
+// AutoReonnect.cpp : implementation file
 //
 
 #include "stdafx.h"
@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 #include "NetDisconnectorDlg.h"
 
-// AutoReonnect 对话框
+// AutoReonnect dialog
 
 IMPLEMENT_DYNAMIC(AutoReonnect, CDialogEx)
 
@@ -39,7 +39,7 @@ BEGIN_MESSAGE_MAP(AutoReonnect, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// AutoReonnect 消息处理程序
+// AutoReonnect message handlers
 
 
 BOOL AutoReonnect::OnInitDialog()
@@ -67,7 +67,7 @@ BOOL AutoReonnect::OnInitDialog()
 	}
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-				  // 异常: OCX 属性页应返回 FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 
