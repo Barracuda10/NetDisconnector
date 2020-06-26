@@ -18,7 +18,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Wait 4s / 4.65s to press S after game show Use S to Spin prompt<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect if it's not car<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <b>Wait 4.65 seconds also wok</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Wait 4.65 seconds also work<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is use the left stick of controller<br>
 <h4>Make solo Public Session</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
