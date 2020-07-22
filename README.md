@@ -8,29 +8,29 @@ This is a tool can disconnect internet use hotkey<br>
 <h3><ins>Usage:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;Run NetDisconnector.exe<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Check or select target network adapter name<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It'll disconnect immediately when press down hotkey<br>
+&nbsp;&nbsp;&nbsp;&nbsp;It'll disconnect immediately when pressing down the hotkey<br>
 <br>
 <h3><ins>Things this tool can do:</ins></h3>
 <h4>Spin the Lucky Wheel</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Start GTA5 with VPN or proxy enabled<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Wait game completing Initializing Social Club<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Join a Invite Only Session and go to Lucky Wheel<br>
-&nbsp;&nbsp;-&nbsp;&nbsp;Wait 4s / 4.65s to press S after the game show Use S to Spin prompt<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Wait for 4s / 4.65s to press S after the game show Use S to Spin prompt<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect internet if it's not car<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, consider wait 4.65 seconds instead<br>
 <!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Wait 4.65 seconds also work<br>-->
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is use the left stick of controller<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is to use the left stick of the controller<br>
 <h4>Make solo Public Session</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnecting time)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnecting time, it means this time must subtract around 3s reconnecting time<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out after offline 15s<br>
 <h4>Other Things</h4>
-&nbsp;&nbsp;-&nbsp;&nbsp;Disconnect internet to prevent game saving unwanted progress<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Disconnect the internet to prevent game saving unwanted progress<br>
 <br>
 <h3><ins>Note:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It save last time settings in Registry<details><summary>See registry path</summary>
+&nbsp;&nbsp;&nbsp;&nbsp;It saves last time settings in Registry<details><summary>See registry path</summary>
 &nbsp;&nbsp;&nbsp;&nbsp;HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 </details>
 &nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
@@ -38,21 +38,21 @@ This is a tool can disconnect internet use hotkey<br>
 <h2>Features</h2>
 <h4>Change Hotkey</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Check and change current hotkey here<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may won't work<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may not work<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png" width="410" height="310"><br>
 <h4>Auto Reconnect</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Enable this option to let it automatically reconnect after disconnect 15s (default)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Change the waiting period in delay box<br>
-&nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing hotkey again<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Change the waiting period in the delay box<br>
+&nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing the hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
 <h4>Extra features</h4>
-<h5>&nbsp;&nbsp;&nbsp;&nbsp;Click these buttons to operate network through menu</h5>
+<h5>&nbsp;&nbsp;&nbsp;&nbsp;Click these buttons to operate the network through the menu</h5>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
-<h5>&nbsp;&nbsp;&nbsp;&nbsp;Choose disconnect approach</h5>
-&nbsp;&nbsp;&nbsp;&nbsp;There are two different approachs to disconnect<br>
-&nbsp;&nbsp;&nbsp;&nbsp;The default method is set to release IP address, its better to use, and faster to disconnect<br>
+<h5>&nbsp;&nbsp;&nbsp;&nbsp;Choose different disconnect approach</h5>
+&nbsp;&nbsp;&nbsp;&nbsp;There are two different approaches to disconnect<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The default method is set to release IP address, it's better to use, and faster to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The disable adapter method shown below is a backup method if the default one not work<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_method.png" width="410" height="310"><br>
