@@ -13,20 +13,20 @@ This is a tool can disconnect internet use hotkey<br>
 <h3><ins>Things this tool can do:</ins></h3>
 <h4>Spin the Lucky Wheel</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Start GTA5 with VPN or proxy enabled<br>
-&nbsp;&nbsp;-&nbsp;&nbsp;Wait game complete Initializing Social Club<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Wait game completing Initializing Social Club<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Join a Invite Only Session and go to Lucky Wheel<br>
-&nbsp;&nbsp;-&nbsp;&nbsp;Wait 4s / 4.65s to press S after game show Use S to Spin prompt<br>
-&nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect if it's not car<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Wait 4.65 seconds also work<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Wait 4s / 4.65s to press S after the game show Use S to Spin prompt<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect internet if it's not car<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, consider wait 4.65 seconds instead<br>
+<!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Wait 4.65 seconds also work<br>-->
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is use the left stick of controller<br>
 <h4>Make solo Public Session</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnecting time)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnecting time, it means this time must subtract around 3s reconnecting time<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out at offline 15s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out after offline 15s<br>
 <h4>Other Things</h4>
-&nbsp;&nbsp;-&nbsp;&nbsp;Disconnect network to prevent game save unwanted progress<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Disconnect internet to prevent game saving unwanted progress<br>
 <br>
 <h3><ins>Note:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
@@ -42,7 +42,7 @@ This is a tool can disconnect internet use hotkey<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_1.png" width="410" height="310"><br>
 <h4>Auto Reconnect</h4>
-&nbsp;&nbsp;&nbsp;&nbsp;Enable this option to let it automatic reconnect after disconnect 15s (default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Enable this option to let it automatically reconnect after disconnect 15s (default)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Change the waiting period in delay box<br>
 &nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing hotkey again<br>
 <br>
