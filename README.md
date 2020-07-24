@@ -27,6 +27,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out after offline 15s<br>
 <h4>Other Things</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Disconnect the internet to prevent game saving unwanted progress<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;This program work when using a VPN or proxy<br>
 <br>
 <h3><ins>Note:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
