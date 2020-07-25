@@ -25,9 +25,14 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnecting time)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnecting time, it means this time must subtract around 3s reconnecting time<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out after offline 15s<br>
+<h4>Make solo Public Session with UDP Block</h4>
+&nbsp;&nbsp;-&nbsp;&nbsp;Change to Firewall Block UDP method<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Offline around 10s (game will not sign out)<br>
 <h4>Other Things</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Disconnect the internet to prevent game saving unwanted progress<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;This program work when using a VPN or proxy<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;The Block UDP and Block TCP methods require system firewall enabled, Auto reconnect will not apply to these methods<br>
 <br>
 <h3><ins>Note:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
