@@ -64,7 +64,7 @@ This is a tool can disconnect internet use hotkey<br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Choose Turn Windows Defender Firewall on or off<br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Turn both network settings to on (If know which network profile is using, only need to turn currently using one on)<br>
 </details>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can disconnect all players in session and block any one join this session<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can disconnect all players in session and block any one from join this session<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect connection to Game Server<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
 <br>
