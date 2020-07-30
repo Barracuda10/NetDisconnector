@@ -56,6 +56,15 @@ This is a tool can disconnect internet use hotkey<br>
 <h4>Disconnect By Firewall</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Switch to firewall disconnect mode to let it disconnect by firewall<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice these method require system firewall enabled<br>
+&nbsp;&nbsp;&nbsp;&nbsp;See how to enable system firewall<br>
+<details>
+      <summary>&nbsp;&nbsp;&nbsp;&nbsp;See how to enable system firewall</summary>
+      <br>
+      <img src="https://raw.githubusercontent.com/Barracuda10/others/master/MatchmakingSwitch/matchmakingswitch_firewallsolosession.png" width=267 height=216><br>
+      &nbsp;&nbsp;-&nbsp;&nbsp;Choose Open Firewall Settings in Help<br>
+      &nbsp;&nbsp;-&nbsp;&nbsp;Choose Turn Windows Defender Firewall on or off<br>
+      &nbsp;&nbsp;-&nbsp;&nbsp;Turn both network settings to on (If know which network profile is using, only need to turn currently using one on)<br>
+</details>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can disconnect all players in session and block any one join this session<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect connection to Game Server<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
