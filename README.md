@@ -53,6 +53,14 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing the hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
+<h4>Disconnect By Firewall</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;Switch to firewall disconnect mode to let it disconnect by firewall<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Notice these method require system firewall enabled<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can disconnect all players in session and block any one join this session<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect connection to Game Server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
+<br>
+<img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_3-5.png" width="410" height="310"><br>
 <h4>Extra features</h4>
 <h5>&nbsp;&nbsp;&nbsp;&nbsp;Click these buttons to operate the network through the menu</h5>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
