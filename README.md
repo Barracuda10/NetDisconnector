@@ -53,12 +53,11 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing the hotkey again<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
-<h4>Disconnect By Firewall</h4>
+<h4>Disconnect by Firewall</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Switch to firewall disconnect mode to let it disconnect by firewall<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice these method require system firewall enabled<br>
-&nbsp;&nbsp;&nbsp;&nbsp;See how to enable system firewall<br>
 <details>
-      <summary>&nbsp;&nbsp;&nbsp;&nbsp;See how to enable system firewall</summary>
+      <summary>See how to enable system firewall</summary>
       <br>
       <img src="https://raw.githubusercontent.com/Barracuda10/others/master/MatchmakingSwitch/matchmakingswitch_firewallsolosession.png" width=267 height=216><br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Choose Open Firewall Settings in Help<br>
