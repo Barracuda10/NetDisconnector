@@ -55,7 +55,10 @@ This is a tool can disconnect internet use hotkey<br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
 <h4>Disconnect by Firewall</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Switch to firewall disconnect mode to let it disconnect by firewall<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Notice these method require system firewall enabled<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can make solo Public Session, It can disconnect all players in the session, and block anyone from joining this session<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect all connections to Game Server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Notice these methods require system firewall enabled, and Auto reconnect will not apply to these methods<br>
 <details>
       <summary>See how to enable system firewall</summary>
       <br>
@@ -66,9 +69,6 @@ This is a tool can disconnect internet use hotkey<br>
       <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_fw_on.png" width=267 height=216><br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Turn both network settings to on (If know which network profile is using, only need to turn currently using one on)<br>
 </details>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can disconnect all players in session and block any one from join this session<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect connection to Game Server<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_3-5.png" width="410" height="310"><br>
 <h4>Extra features</h4>
