@@ -63,6 +63,7 @@ This is a tool can disconnect internet use hotkey<br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Choose Open Firewall Settings in Help<br>
       <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_fw.png" width=267 height=216><br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Choose Turn Windows Defender Firewall on or off<br>
+      <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_fw_on.png" width=267 height=216><br>
       &nbsp;&nbsp;-&nbsp;&nbsp;Turn both network settings to on (If know which network profile is using, only need to turn currently using one on)<br>
 </details>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can disconnect all players in session and block any one from join this session<br>
