@@ -59,6 +59,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It can disconnect all players in the session, and block anyone from joining this session<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect all connections to Game Server<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Game will not force sign out by using these methods<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice these methods require system firewall enabled, and Auto reconnect will not apply to these methods<br>
 <details>
       <summary>See how to enable system firewall</summary>
