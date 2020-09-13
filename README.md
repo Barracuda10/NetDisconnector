@@ -15,11 +15,11 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Start GTA5 with VPN or proxy enabled<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Wait game completing Initializing Social Club<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Join a Invite Only Session and go to Lucky Wheel<br>
-&nbsp;&nbsp;-&nbsp;&nbsp;Wait for 4s / 4.65s to press S after the game show Use S to Spin prompt<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;Wait few seconds to press S after the game show Use S to Spin prompt<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect internet if it's not car<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, consider wait 4.65 seconds instead<br>
+<!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, consider wait 4.65 seconds instead<br>-->
 <!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Wait 4.65 seconds also work<br>-->
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is to use the left stick of the controller<br>
+<!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is to use the left stick of the controller<br>-->
 <h4>Make solo Public Session</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnecting time)<br>
