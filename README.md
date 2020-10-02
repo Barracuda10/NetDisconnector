@@ -32,10 +32,8 @@ This is a tool can disconnect internet use hotkey<br>
 <h4>Other Things</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Disconnect the internet to prevent game saving unwanted progress<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;This program work when using a VPN or proxy<br>
-&nbsp;&nbsp;-&nbsp;&nbsp;The Block UDP and Block TCP methods require system firewall enabled, Auto reconnect will not apply to these methods<br>
-<br>
-<h3><ins>Note:</ins></h3>
-&nbsp;&nbsp;&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;The Firewall Block methods require system firewall enabled<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
 &nbsp;&nbsp;&nbsp;&nbsp;It saves last time settings in Registry<details><summary>See registry path</summary>
 &nbsp;&nbsp;&nbsp;&nbsp;HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 </details>
