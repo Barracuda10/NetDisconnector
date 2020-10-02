@@ -15,6 +15,7 @@ AutoReonnect::AutoReonnect(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_AUTORECONNECT_DIALOG, pParent)
 	, m_delay(_T(""))
 	, input_autoReconnect(0)
+	, input_applytofirewall(0)
 {
 
 }
@@ -29,6 +30,7 @@ void AutoReonnect::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK1, m_autoreconnect);
 	DDX_Text(pDX, IDC_DELAY, m_delay);
 	DDX_Control(pDX, IDC_DELAY, m_delayCtrl);
+	DDX_Control(pDX, IDC_CHECK2, m_applytofirewall);
 }
 
 
@@ -36,6 +38,7 @@ BEGIN_MESSAGE_MAP(AutoReonnect, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK1, &AutoReonnect::OnBnClickedCheck1)
 	ON_EN_CHANGE(IDC_DELAY, &AutoReonnect::OnEnChangeDelay)
 	ON_WM_SETCURSOR()
+	ON_BN_CLICKED(IDC_CHECK2, &AutoReonnect::OnBnClickedCheck2)
 END_MESSAGE_MAP()
 
 
@@ -53,18 +56,22 @@ BOOL AutoReonnect::OnInitDialog()
 	StrCpyW(lf.lfFaceName, L"System");
 	m_font.CreateFontIndirect(&lf);
 	GetDlgItem(IDC_CHECK1)->SetFont(&m_font);
+	GetDlgItem(IDC_CHECK2)->SetFont(&m_font);
 
 	m_autoreconnect.SetCheck(input_autoReconnect);
 	if (m_autoreconnect.GetCheck() == BST_CHECKED) {
+		GetDlgItem(IDC_CHECK2)->EnableWindow(TRUE);
 		GetDlgItem(IDC_DELAY)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC)->EnableWindow(TRUE);
 		GetDlgItem(IDC_DELAY)->SetFocus();
 	}
 	else{
+		GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);
 		GetDlgItem(IDC_DELAY)->EnableWindow(FALSE);
 		GetDlgItem(IDC_STATIC)->EnableWindow(FALSE);
 		GetDlgItem(IDC_CHECK1)->SetFocus();
 	}
+	m_applytofirewall.SetCheck(input_applytofirewall);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
@@ -75,6 +82,7 @@ void AutoReonnect::OnBnClickedCheck1()
 {
 	if (m_autoreconnect.GetCheck() == BST_CHECKED) {
 		input_autoReconnect = m_autoreconnect.GetCheck();
+		GetDlgItem(IDC_CHECK2)->EnableWindow(TRUE);
 		GetDlgItem(IDC_DELAY)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC)->EnableWindow(TRUE);
 		GetDlgItem(IDC_DELAY)->SetFocus();
@@ -82,9 +90,21 @@ void AutoReonnect::OnBnClickedCheck1()
 	}
 	else {
 		input_autoReconnect = m_autoreconnect.GetCheck();
+		GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);
 		GetDlgItem(IDC_DELAY)->EnableWindow(FALSE);
 		GetDlgItem(IDC_STATIC)->EnableWindow(FALSE);
 		GetDlgItem(IDC_CHECK1)->SetFocus();
+	}
+}
+
+
+void AutoReonnect::OnBnClickedCheck2()
+{
+	if (m_applytofirewall.GetCheck() == BST_CHECKED) {
+		input_applytofirewall = m_applytofirewall.GetCheck();
+	}
+	else {
+		input_applytofirewall = m_applytofirewall.GetCheck();
 	}
 }
 
@@ -103,6 +123,10 @@ BOOL AutoReonnect::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 		return true;
 	}
 	if (pWnd == GetDlgItem(IDC_CHECK1)) {
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+		return true;
+	}
+	if (pWnd == GetDlgItem(IDC_CHECK2)) {
 		SetCursor(LoadCursor(NULL, IDC_HAND));
 		return true;
 	}

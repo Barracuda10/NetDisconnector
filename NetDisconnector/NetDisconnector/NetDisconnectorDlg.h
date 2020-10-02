@@ -36,10 +36,10 @@ protected:
 private:
 	Manual *pManual;
 public:
-	CComboBox m_AdaptersList;
-	CString m_LogContent;
+	CComboBox m_adaptersList;
+	CString m_log;
 	//CEdit m_LogCtrl;
-	CRichEditCtrl m_LogCtrl;
+	CRichEditCtrl m_logCtrl;
 	afx_msg void OnNetworkDisconnect();
 	afx_msg void OnNetworkConnect();
 	afx_msg void OnOptionsChangehotkey();
@@ -69,10 +69,24 @@ public:
 	afx_msg void OnHelpManual();
 	afx_msg void OnOptionsAutoreconnect();
 	UINT AutoReconnectState;
+	UINT ARApplytoFirewallState;
 	int reconnectDelay;
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	int logWidthDiff;
 	int logHeightDiff;
 	int comboWidthDiff;
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+	UINT AdapterCurrent;
+	afx_msg void OnOptionsFirewallblockudp();
+	BOOL BlockudpState;
+	afx_msg void OnOptionsFirewallblocktcp();
+	BOOL BlocktcpState;
+	afx_msg void OnOptionsFirewallblockall();
+	BOOL BlockallState;
+	BOOL fwOn;
+	afx_msg void OnHelpOpenfirewallsettings();
+	afx_msg void OnHelpViewfirewallrules();
+	//BOOL connection;
+	afx_msg void AddLog(CString message);
+	afx_msg BOOL CheckSystemFirewall();
 };

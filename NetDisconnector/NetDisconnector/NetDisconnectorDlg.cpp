@@ -1,4 +1,4 @@
-
+﻿
 // NetDisconnectorDlg.cpp : implementation file
 //
 
@@ -29,6 +29,10 @@
 #include<mmsystem.h>
 #pragma comment(lib,"winmm.lib")
 
+//These headers use to operate system firewall
+#include<netfw.h>
+
+
 
 
 
@@ -38,7 +42,7 @@
 
 CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_NETDISCONNECTOR_DIALOG, pParent)
-	, m_LogContent(_T(""))
+	, m_log(_T(""))
 	, get_adapter(_T(""))
 	, get_hotkey(_T(""))
 	, DcSoundState(0)
@@ -47,11 +51,16 @@ CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 	, get_vk_code(0)
 	, get_modifiers(0)
 	, AutoReconnectState(0)
+	, ARApplytoFirewallState(0)
 	, reconnectDelay(0)
 	, logWidthDiff(0)
 	, logHeightDiff(0)
 	, comboWidthDiff(0)
 	, AdapterCurrent(0)
+	, BlockudpState(0)
+	, BlocktcpState(0)
+	, BlockallState(0)
+	, fwOn(0)
 	//, connection(true)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
@@ -60,10 +69,9 @@ CNetDisconnectorDlg::CNetDisconnectorDlg(CWnd* pParent /*=NULL*/)
 void CNetDisconnectorDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_COMBO, m_AdaptersList);
-	DDX_Text(pDX, IDC_LOG, m_LogContent);
-	DDX_Control(pDX, IDC_LOG, m_LogCtrl);
-	DDX_Control(pDX, IDC_LOG, m_LogCtrl);
+	DDX_Control(pDX, IDC_COMBO, m_adaptersList);
+	DDX_Text(pDX, IDC_LOG, m_log);
+	DDX_Control(pDX, IDC_LOG, m_logCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CNetDisconnectorDlg, CDialogEx)
@@ -89,6 +97,11 @@ BEGIN_MESSAGE_MAP(CNetDisconnectorDlg, CDialogEx)
 	ON_COMMAND(ID_OPTIONS_AUTORECONNECT, &CNetDisconnectorDlg::OnOptionsAutoreconnect)
 	ON_WM_SIZE()
 	ON_WM_SETCURSOR()
+	ON_COMMAND(ID_OPTIONS_BLOCKUDP, &CNetDisconnectorDlg::OnOptionsFirewallblockudp)
+	ON_COMMAND(ID_OPTIONS_BLOCKTCP, &CNetDisconnectorDlg::OnOptionsFirewallblocktcp)
+	ON_COMMAND(ID_OPTIONS_FIREWALLBLOCKALL, &CNetDisconnectorDlg::OnOptionsFirewallblockall)
+	ON_COMMAND(ID_HELP_OPENFIREWALLSETTINGS, &CNetDisconnectorDlg::OnHelpOpenfirewallsettings)
+	ON_COMMAND(ID_HELP_VIEWFIREWALLRULES, &CNetDisconnectorDlg::OnHelpViewfirewallrules)
 END_MESSAGE_MAP()
 
 
@@ -105,8 +118,27 @@ struct AdaptersSet {
 	CString ConnectionName;
 	CString ValuePnPInstanceId;
 	CString PnPInstanceId;
+
+	LPWSTR cmdline_disconnect[2];
+	LPWSTR cmdline_connect[2];
+	/*LPWSTR cmdline_disconnect_2;
+	LPWSTR cmdline_connect_2;*/
 }AdaptersSet[32];
 int aIndex = 0;
+
+
+struct RulesSet {
+	CString RuleName;
+	BOOL enable = FALSE;
+
+	LPCSTR cmdline_enable[2];
+	LPCSTR cmdline_disable[2];
+}RulesSet[4];
+int rIndex = 0;
+
+
+CString modeSet[8] = { _T("Disconnect Adapter"), _T("Disable Adapter"), _T("Firewall Block UDP"), _T("Firewall Block TCP"), _T("Firewall Block All") };
+int idSet[8] = { ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_DISABLEADAPTER, ID_OPTIONS_BLOCKUDP, ID_OPTIONS_BLOCKTCP, ID_OPTIONS_FIREWALLBLOCKALL };
 
 
 // CNetDisconnectorDlg message handlers
@@ -123,7 +155,7 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	// TODO: Add extra initialization here
 
 
-	m_LogCtrl.SetBackgroundColor(false, RGB(12, 12, 12));
+	m_logCtrl.SetBackgroundColor(false, RGB(12, 12, 12));
 	CHARFORMAT2 cf;
 	ZeroMemory(&cf, sizeof(cf));
 	cf.dwMask = CFM_COLOR | CFM_FACE | CFM_SIZE;
@@ -131,10 +163,10 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	cf.crTextColor = RGB(204, 204, 204);
 	cf.yHeight = 220;
 	StrCpyW(cf.szFaceName, _T("Calibri"));
-	m_LogCtrl.SetDefaultCharFormat(cf);
-	m_LogCtrl.SetTextMode(TM_PLAINTEXT);
-	m_LogCtrl.SetReadOnly(TRUE);
-	m_LogCtrl.HideCaret();
+	m_logCtrl.SetDefaultCharFormat(cf);
+	m_logCtrl.SetTextMode(TM_PLAINTEXT);
+	m_logCtrl.SetReadOnly(TRUE);
+	m_logCtrl.HideCaret();
 	::HideCaret(GetDlgItem(IDC_LOG)->GetSafeHwnd());
 
 
@@ -167,6 +199,68 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 	//	CString PnPInstanceId;
 	//}AdaptersSet[32];
 	//int aIndex = 0;
+
+
+	UpdateData(true);
+	SYSTEMTIME systime;
+	CString time;
+
+
+
+	GetLocalTime(&systime);
+	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+	AutoReconnectState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("AutoReconnect"), BST_UNCHECKED);
+	ARApplytoFirewallState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("AutoReconnectFirewall"), BST_CHECKED);
+	reconnectDelay = AfxGetApp()->GetProfileInt(_T("Settings"), _T("ReconnectDelay"), 15000);
+
+	DcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcSound"), MF_CHECKED);
+	RcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("RcSound"), MF_CHECKED);
+	CMenu* menu = GetMenu()->GetSubMenu(1);
+	menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | DcSoundState);
+	menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | RcSoundState);
+
+	DcMethod = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcMethod"), 0);
+	if (DcMethod == MF_CHECKED)
+		DcMethod = 1;
+	else if (DcMethod == MF_UNCHECKED)
+		DcMethod = 0;
+
+	menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, idSet[DcMethod], MF_BYCOMMAND);
+	/*if (DcMethod == 0)
+		menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_RELEASEIPADDRESS, MF_BYCOMMAND);
+	else if (DcMethod == 1)
+		menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_DISABLEADAPTER, MF_BYCOMMAND);
+	else if (DcMethod == 2)
+		menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_BLOCKUDP, MF_BYCOMMAND);
+	else if (DcMethod == 3)
+		menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_BLOCKTCP, MF_BYCOMMAND);
+	else if (DcMethod == 4)
+		menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_FIREWALLBLOCKALL, MF_BYCOMMAND);*/
+
+	AfxGetMainWnd()->SetWindowTextW(modeSet[DcMethod] + _T(" - NetDisconnector"));
+
+
+
+
+	RulesSet[0].enable = AfxGetApp()->GetProfileInt(_T("Settings"), _T("BlockUDPState"), 0);
+	RulesSet[1].enable = AfxGetApp()->GetProfileInt(_T("Settings"), _T("BlockTCPState"), 0);
+	if (RulesSet[0].enable && RulesSet[1].enable) {
+		RulesSet[2].enable = true;
+	}
+	RulesSet[0].RuleName = _T("udp");
+	RulesSet[1].RuleName = _T("tcp");
+	RulesSet[2].RuleName = _T("all");
+	RulesSet[0].cmdline_enable[0] = "netsh advfirewall firewall set rule name=\"NetDisconnector (UDP-In)\" new enable=yes";
+	RulesSet[0].cmdline_enable[1] = "netsh advfirewall firewall set rule name=\"NetDisconnector (UDP-Out)\" new enable=yes";
+	RulesSet[1].cmdline_enable[0] = "netsh advfirewall firewall set rule name=\"NetDisconnector (TCP-In)\" new enable=yes";
+	RulesSet[1].cmdline_enable[1] = "netsh advfirewall firewall set rule name=\"NetDisconnector (TCP-Out)\" new enable=yes";
+	RulesSet[0].cmdline_disable[0] = "netsh advfirewall firewall set rule name=\"NetDisconnector (UDP-In)\" new enable=no";
+	RulesSet[0].cmdline_disable[1] = "netsh advfirewall firewall set rule name=\"NetDisconnector (UDP-Out)\" new enable=no";
+	RulesSet[1].cmdline_disable[0] = "netsh advfirewall firewall set rule name=\"NetDisconnector (TCP-In)\" new enable=no";
+	RulesSet[1].cmdline_disable[1] = "netsh advfirewall firewall set rule name=\"NetDisconnector (TCP-Out)\" new enable=no";
+
+
 
 
 	//GetAdaptersInfo
@@ -269,8 +363,8 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 					ValueName = NULL;
 				}
 				if (AdaptersSet[matchIndex].PnPInstanceId.Left(4) == "PCI\\" || AdaptersSet[matchIndex].PnPInstanceId.Left(4) == "ROOT") {
-					//m_AdaptersList.AddString(AdaptersSet[matchIndex].ConnectionName + _T(" | ") + AdaptersSet[matchIndex].Description + _T(" | ") + AdaptersSet[matchIndex].Gateway + _T(" | ") + AdaptersSet[matchIndex].CConnection);//Add Connections to combobox
-					m_AdaptersList.AddString(AdaptersSet[matchIndex].ConnectionName);
+					//m_adaptersList.AddString(AdaptersSet[matchIndex].ConnectionName + _T(" | ") + AdaptersSet[matchIndex].Description + _T(" | ") + AdaptersSet[matchIndex].Gateway + _T(" | ") + AdaptersSet[matchIndex].CConnection);//Add Connections to combobox
+					m_adaptersList.AddString(AdaptersSet[matchIndex].ConnectionName);
 				}
 				matchIndex = aIndex;
 			}
@@ -319,8 +413,8 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 		//	ValueName = NULL;
 		//}
 		//if (AdaptersSet[dwIndex].PnPInstanceId.Left(4) == "PCI\\" || AdaptersSet[dwIndex].PnPInstanceId.Left(4) == "ROOT") {
-		//	m_AdaptersList.AddString(AdaptersSet[dwIndex].AdapterName);//Add AdapterName to combobox
-		//	m_AdaptersList.AddString(AdaptersSet[dwIndex].ConnectionName);//Add Connections to combobox
+		//	m_adaptersList.AddString(AdaptersSet[dwIndex].AdapterName);//Add AdapterName to combobox
+		//	m_adaptersList.AddString(AdaptersSet[dwIndex].ConnectionName);//Add Connections to combobox
 		//}
 	}
 
@@ -328,21 +422,21 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 
 	
 	get_adapter = AfxGetApp()->GetProfileString(_T("Settings"), _T("Adapter"), NULL);//Get default adaptor
-	int pos = m_AdaptersList.FindStringExact(0, get_adapter);
+	int pos = m_adaptersList.FindStringExact(0, get_adapter);
 	if (pos == -1) {
 		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
 			if (AdaptersSet[matchIndex].Connection) {
-				pos = m_AdaptersList.FindStringExact(0, AdaptersSet[matchIndex].ConnectionName);
+				pos = m_adaptersList.FindStringExact(0, AdaptersSet[matchIndex].ConnectionName);
 				break;
 			}
 		}
-		//pos = m_AdaptersList.FindStringExact(0, _T("Local Area Connection"));//If pos eqaul to NULL, search for default adaptor
+		//pos = m_adaptersList.FindStringExact(0, _T("Local Area Connection"));//If pos eqaul to NULL, search for default adaptor
 		//if (pos == -1) {
-		//	pos = m_AdaptersList.FindStringExact(0, _T("BDLJ"));
+		//	pos = m_adaptersList.FindStringExact(0, _T("BDLJ"));
 		//	if (pos == -1) {
-		//		pos = m_AdaptersList.FindStringExact(0, _T("Wi-Fi"));
+		//		pos = m_adaptersList.FindStringExact(0, _T("Wi-Fi"));
 		//		if (pos == -1) {
-		//			pos = m_AdaptersList.FindStringExact(0, _T("WLAN"));
+		//			pos = m_adaptersList.FindStringExact(0, _T("WLAN"));
 		//			if (pos == -1) {
 		//				pos = 0;//If cant find default adapter, set it to first one
 		//			}
@@ -350,30 +444,22 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 		//	}
 		//}
 	}
-	m_AdaptersList.SetCurSel(pos);//Set selected adaptor
-	m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Save current select to value get_adapter
+	m_adaptersList.SetCurSel(pos);//Set selected adaptor
+	m_adaptersList.GetLBText(m_adaptersList.GetCurSel(), get_adapter);//Save current select to value get_adapter
 
 
-	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
+
 
 	get_vk_code = AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyVk"), VK_PAUSE);
 	get_modifiers = AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyModifiers"), NULL);
 
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
 	if (get_vk_code >= 0x21 && get_vk_code <= 0x2D || get_modifiers == 1 || get_modifiers == 3 || get_modifiers == 4 || get_modifiers == 6) {
-		m_LogContent += time + _T("This key may not work!!!") + _T("\r\n");
+		m_log += time + _T("This key may not work!!!") + _T("\r\n");
 	}
-
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 	ATOM HotkeyID = GlobalAddAtom(_T("INITIAL_BIND")) - 0xc000;//Register hotkey
 	if (FALSE == RegisterHotKey(GetSafeHwnd(), 1, get_modifiers | MOD_NOREPEAT, get_vk_code)) {
-		m_LogContent += time + _T("Register hotkey failed!!!");
+		m_log += time + _T("Register hotkey failed!!!");
 	}
 	else {
 		get_hotkey = AfxGetApp()->GetProfileString(_T("Settings"), _T("Key"), _T("Pause"));//Get hotkey string
@@ -383,39 +469,121 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 				break;
 			}
 		}
-		if (AdaptersSet[AdapterCurrent].Connection) {
-			m_LogContent += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+		if (DcMethod < 2) {
+			if (AdaptersSet[AdapterCurrent].Connection) {
+				m_log += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+			}
+			else {
+				m_log += time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+			}
 		}
-		else {
-			m_LogContent += time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+		else if (DcMethod >= 2) {
+			//Check system firewall
+			if (!CheckSystemFirewall()) {
+				m_log += time + _T("Failed to check firewall") + _T("\r\n");
+			}
+			/*HRESULT hr = S_OK;
+			INetFwMgr* fwMgr = NULL;
+			INetFwPolicy* fwPolicy = NULL;
+			INetFwProfile* fwProfile;
+			hr = CoCreateInstance(
+				__uuidof(NetFwMgr),
+				NULL,
+				CLSCTX_INPROC_SERVER,
+				__uuidof(INetFwMgr),
+				(void**)&fwMgr
+			);
+			hr = fwMgr->get_LocalPolicy(&fwPolicy);
+			if (FAILED(hr)) {
+				m_log += time + _T("Failed to check firewall") + _T("\r\n");
+			}
+			hr = fwPolicy->get_CurrentProfile(&fwProfile);
+			if (FAILED(hr)) {
+				m_log += time + _T("Failed to check firewall") + _T("\r\n");
+			}
+			VARIANT_BOOL fwEnabled = NULL;
+			hr = fwProfile->get_FirewallEnabled(&fwEnabled);
+			if (FAILED(hr)) {
+				m_log += time + _T("Failed to check firewall") + _T("\r\n");
+			}
+			if (fwEnabled != VARIANT_FALSE) {
+				fwOn = TRUE;
+			}
+			else {
+				fwOn = FALSE;
+			}*/
+
+
+			if (fwOn) {
+				if (!RulesSet[DcMethod - 2].enable) {
+					m_log += time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+				}
+				else {
+					m_log += time + _T("Firewall rules activated... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+				}
+			}
+			else {
+				m_log += time + _T("Firewall is off") + _T("\r\n");
+				m_log += time + _T("This mode can not work without firewall on");
+			}
 		}
 	}
+	
+
+
+
+	//Generate command line
+	for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+		CString cmdline;
+		LPWSTR temp;
+
+		// Use this macro for Initializing the conversion.
+		// Actually, some member variable initialization deep inside.
+		USES_CONVERSION;
+		
+		cmdline = _T("cmd.exe /c ipconfig /release \"") + AdaptersSet[matchIndex].ConnectionName + _T("\">nul");
+		temp = new WCHAR[cmdline.GetLength() + 1];
+		wcscpy((LPTSTR)temp, T2W((LPTSTR)cmdline.GetBuffer(NULL)));
+		cmdline.ReleaseBuffer();
+		AdaptersSet[matchIndex].cmdline_disconnect[0] = temp;
+
+		cmdline = _T("cmd.exe /c netsh interface set interface name=\"") + AdaptersSet[matchIndex].ConnectionName + _T("\" admin=disabled");
+		temp = new WCHAR[cmdline.GetLength() + 1];
+		wcscpy((LPTSTR)temp, T2W((LPTSTR)cmdline.GetBuffer(NULL)));
+		cmdline.ReleaseBuffer();
+		AdaptersSet[matchIndex].cmdline_disconnect[1] = temp;
+
+		cmdline = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
+		temp = new WCHAR[cmdline.GetLength() + 1];
+		wcscpy((LPTSTR)temp, T2W((LPTSTR)cmdline.GetBuffer(NULL)));
+		cmdline.ReleaseBuffer();
+		AdaptersSet[matchIndex].cmdline_connect[0] = temp;
+
+		cmdline = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
+		temp = new WCHAR[cmdline.GetLength() + 1];
+		wcscpy((LPTSTR)temp, T2W((LPTSTR)cmdline.GetBuffer(NULL)));
+		cmdline.ReleaseBuffer();
+		AdaptersSet[matchIndex].cmdline_connect[1] = temp;
+	}
+
+
+
+
+	BOOL ruledAdded = AfxGetApp()->GetProfileInt(_T("Settings"), _T("RuleAdded"), 0);
+	if (ruledAdded == 0) {
+		WinExec("netsh advfirewall firewall add rule name=\"NetDisconnector (UDP-In)\" dir=in action=block protocol=udp localport=6672 enable=no", SW_HIDE);
+		WinExec("netsh advfirewall firewall add rule name=\"NetDisconnector (UDP-Out)\" dir=out action=block protocol=udp localport=6672 enable=no", SW_HIDE);
+		WinExec("netsh advfirewall firewall add rule name=\"NetDisconnector (TCP-In)\" dir=in action=block protocol=tcp enable=no", SW_HIDE);
+		WinExec("netsh advfirewall firewall add rule name=\"NetDisconnector (TCP-Out)\" dir=out action=block protocol=tcp enable=no", SW_HIDE);
+		ruledAdded = true;
+	}
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("RuleAdded"), ruledAdded);
+	
+
+
+
 	UpdateData(false);
-	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
-
-
-	DcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcSound"), MF_CHECKED);
-	RcSoundState = AfxGetApp()->GetProfileInt(_T("Settings"), _T("RcSound"), MF_CHECKED);
-	CMenu* menu = GetMenu()->GetSubMenu(1);
-	menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | DcSoundState);
-	menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | RcSoundState);
-
-	DcMethod = AfxGetApp()->GetProfileInt(_T("Settings"), _T("DcMethod"), 0);
-	if (DcMethod == MF_CHECKED)
-		DcMethod = 1;
-	else if(DcMethod == MF_UNCHECKED)
-		DcMethod = 0;
-
-	if (DcMethod == 0) {
-		menu->CheckMenuRadioItem(6, 7, 6, MF_BYPOSITION);
-	}
-	else {
-		menu->CheckMenuRadioItem(6, 7, 7, MF_BYPOSITION);
-	}
-
-
-	AutoReconnectState =  AfxGetApp()->GetProfileInt(_T("Settings"), _T("AutoReconnect"), BST_UNCHECKED);
-	reconnectDelay = AfxGetApp()->GetProfileInt(_T("Settings"), _T("ReconnectDelay"), 15000);
+	m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 
 	GetDlgItem(IDC_LOG)->SetFocus();
@@ -426,11 +594,11 @@ BOOL CNetDisconnectorDlg::OnInitDialog()
 
 	WINDOWPLACEMENT wndpl;
 
-	m_LogCtrl.GetWindowPlacement(&wndpl);
+	m_logCtrl.GetWindowPlacement(&wndpl);
 	logWidthDiff = rcParent.Width() - wndpl.rcNormalPosition.right;
 	logHeightDiff = rcParent.Height() - wndpl.rcNormalPosition.bottom;
 	
-	m_AdaptersList.GetWindowPlacement(&wndpl);
+	m_adaptersList.GetWindowPlacement(&wndpl);
 	comboWidthDiff = rcParent.Width() - wndpl.rcNormalPosition.right;
 
 	return FALSE;  // return TRUE  unless you set the focus to a control
@@ -492,7 +660,7 @@ void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 
 	if (reconnectCountdown) {
 		CString adapterTemp;
-		m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), adapterTemp);
+		m_adaptersList.GetLBText(m_adaptersList.GetCurSel(), adapterTemp);
 		//connection = true;
 		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
 			if (adapterTemp == AdaptersSet[matchIndex].ConnectionName) {
@@ -503,7 +671,7 @@ void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 		return;
 	}
 
-	m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Get adaptor name
+	m_adaptersList.GetLBText(m_adaptersList.GetCurSel(), get_adapter);//Get adaptor name
 	//connection = true;
 	for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
 		if (get_adapter == AdaptersSet[matchIndex].ConnectionName) {
@@ -512,22 +680,17 @@ void CNetDisconnectorDlg::OnCbnSelchangeCombo()
 		}
 	}
 
-	SYSTEMTIME systime;
-	CString time;
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+	AddLog(_T("Target adapter set to ") + get_adapter);
 
-	m_LogContent += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter + _T("");
 
-	if (AdaptersSet[AdapterCurrent].Connection) {
-		m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+	if (DcMethod < 2) {
+		if (AdaptersSet[AdapterCurrent].Connection) {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+		}
+		else {
+			AddLog(_T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect"));
+		}
 	}
-	else {
-		m_LogContent += _T("\r\n") + time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
-	}
-
-	UpdateData(false);
-	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
 
@@ -542,8 +705,8 @@ void CNetDisconnectorDlg::OnEnSetfocusLog()
 	MSG msg;
 	PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
 
-	m_LogCtrl.SetSel(-1, -1);
-	m_LogCtrl.HideCaret();
+	m_logCtrl.SetSel(-1, -1);
+	m_logCtrl.HideCaret();
 	GetDlgItem(IDC_OLDLOG)->SetFocus();
 }
 
@@ -556,12 +719,7 @@ void CNetDisconnectorDlg::OnOptionsChangehotkey()
 	Record RecDlg;
 	RecDlg.m_RecordLabel = get_hotkey;
 	result = RecDlg.DoModal();
-	if (IDCANCEL == result) {  //If press cancel then quit
-		ATOM HotkeyID = GlobalAddAtom(_T("INITIAL_REBIND")) - 0xc000; //Register hotkey
-		RegisterHotKey(GetSafeHwnd(), 1, AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyModifiers"), NULL) | MOD_NOREPEAT, AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyVk"), VK_PAUSE));//Register hotkey
-		return;
-	}
-	if (RecDlg.input_vk_code == 0x00) {  //If press nothing then quit
+	if (IDCANCEL == result || RecDlg.input_vk_code == 0x00) {  //If press cancel then quit or If press nothing then quit
 		ATOM HotkeyID = GlobalAddAtom(_T("INITIAL_REBIND")) - 0xc000; //Register hotkey
 		RegisterHotKey(GetSafeHwnd(), 1, AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyModifiers"), NULL) | MOD_NOREPEAT, AfxGetApp()->GetProfileInt(_T("Settings"), _T("KeyVk"), VK_PAUSE));//Register hotkey
 		return;
@@ -575,10 +733,6 @@ void CNetDisconnectorDlg::OnOptionsChangehotkey()
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("KeyVk"), get_vk_code);
 
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
-	GetLocalTime(&systime);
-	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
 	get_hotkey = RecDlg.input_key; //Add keys which have issue here
 	if (get_vk_code == 0x13) {
@@ -597,19 +751,44 @@ void CNetDisconnectorDlg::OnOptionsChangehotkey()
 	get_modifiers == 7 Ctrl + Shift + Alt + *
 	*/
 	if (get_vk_code >= 0x21 && get_vk_code <= 0x2D || get_modifiers == 1 || get_modifiers == 3 || get_modifiers == 4 || get_modifiers == 6) {
-		m_LogContent += _T("\r\n") + time + _T("This key may not work!!!");
+		AddLog(_T("This key may not work!!!"));
 	}
 
 	AfxGetApp()->WriteProfileString(_T("Settings"), _T("Key"), get_hotkey);
 
 	if (done) {
-		m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (get_adapter == AdaptersSet[matchIndex].ConnectionName) {
+				AdapterCurrent = matchIndex;
+				break;
+			}
+		}
+		if (DcMethod < 2) {
+			if (AdaptersSet[AdapterCurrent].Connection) {
+				AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+			}
+			else {
+				AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect"));
+			}
+		}
+		else {
+			if (fwOn) {
+				if (!RulesSet[DcMethod - 2].enable) {
+					AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+				}
+				else {
+					AddLog(_T("Firewall rules activated... Press ") + get_hotkey.MakeUpper() + _T(" to connect"));
+				}
+			}
+			else {
+				AddLog(_T("Firewall is off"));
+				AddLog(_T("This mode can not work without firewall on"));
+			}
+		}
 	}
 	else{
-		m_LogContent += _T("\r\n") + time + _T("Register hotkey failed!!!");
+		AddLog(_T("Register hotkey failed!!!"));
 	}
-	UpdateData(false);
-	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 }
 
 
@@ -620,33 +799,36 @@ void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 	AutoReonnect AutDlg;
 	CString output_delay;
 	UINT AutoReconnectStateOld = AutoReconnectState;
+	UINT ARApplytoFirewallStateOld = ARApplytoFirewallState;
 	AutDlg.input_autoReconnect = AutoReconnectState;
+	AutDlg.input_applytofirewall = ARApplytoFirewallState;
 	output_delay.Format(_T("%d"), reconnectDelay);
 	AutDlg.m_delay = output_delay;
 	AutDlg.DoModal();
 	AutoReconnectState = AutDlg.input_autoReconnect;
+	ARApplytoFirewallState = AutDlg.input_applytofirewall;
 	reconnectDelay = _ttoi(AutDlg.m_delay);
 
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
 
 	if (AutoReconnectState != AutoReconnectStateOld) {
 		if (AutoReconnectState == BST_UNCHECKED) {
-			GetLocalTime(&systime);
-			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+			KillTimer(2);
 
-			m_LogContent += _T("\r\n") + time + _T("Auto reconnect disabled");
-			UpdateData(false);
-			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			AddLog(_T("Auto reconnect disabled"));
 		}
 		else if (AutoReconnectState == BST_CHECKED) {
-			GetLocalTime(&systime);
-			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+			AddLog(_T("Auto reconnect enabled"));
+		}
+	}
+	if (ARApplytoFirewallState != ARApplytoFirewallStateOld) {
+		if (ARApplytoFirewallState == BST_UNCHECKED) {
+			KillTimer(2);
 
-			m_LogContent += _T("\r\n") + time + _T("Auto reconnect enabled");
-			UpdateData(false);
-			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			AddLog(_T("Auto reconnect for Firewall Methods disabled"));
+		}
+		else if (ARApplytoFirewallState == BST_CHECKED) {
+			AddLog(_T("Auto reconnect for Firewall Methods enabled"));
 		}
 	}
 }
@@ -684,19 +866,19 @@ void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 //		GetLocalTime(&systime);
 //		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 //		
-//		pDlg->m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
+//		pDlg->m_log += _T("\r\n") + time + _T("Disconnecting...");
 //		pDlg->UpdateData(false);
-//		pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//		pDlg->m_logCtrl.LineScroll(pDlg->m_logCtrl.GetLineCount(), 0);
 //
 //		if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
 //			WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
 //			GetLocalTime(&systime);
 //			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 //
-//			pDlg->m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-//			pDlg->m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+//			pDlg->m_log += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+//			pDlg->m_log += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 //			pDlg->UpdateData(false);
-//			pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//			pDlg->m_logCtrl.LineScroll(pDlg->m_logCtrl.GetLineCount(), 0);
 //		}
 //	}
 //	else {
@@ -724,19 +906,19 @@ void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 //		GetLocalTime(&systime);
 //		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 //
-//		pDlg->m_LogContent += _T("\r\n") + time + _T("Connecting...");
+//		pDlg->m_log += _T("\r\n") + time + _T("Connecting...");
 //		pDlg->UpdateData(false);
-//		pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//		pDlg->m_logCtrl.LineScroll(pDlg->m_logCtrl.GetLineCount(), 0);
 //
 //		if (WaitForSingleObject(pi.hProcess, 12000) == WAIT_TIMEOUT) {//Wait until process is complete then play notification sound
 //			WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
 //			GetLocalTime(&systime);
 //			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 //
-//			pDlg->m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-//			pDlg->m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+//			pDlg->m_log += _T("\r\n") + time + _T("Connecting timeout!!!");
+//			pDlg->m_log += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 //			pDlg->UpdateData(false);
-//			pDlg->m_LogCtrl.LineScroll(pDlg->m_LogCtrl.GetLineCount(), 0);
+//			pDlg->m_logCtrl.LineScroll(pDlg->m_logCtrl.GetLineCount(), 0);
 //		}
 //	}
 //	return true;
@@ -746,63 +928,80 @@ void CNetDisconnectorDlg::OnOptionsAutoreconnect()
 void CNetDisconnectorDlg::OnNetworkDisconnect()
 {
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
 
+	if (DcMethod >= 2) {
+		if (DcMethod - 2 != 2) {
+			if (RulesSet[DcMethod - 2].enable == 0) {
+				WinExec(RulesSet[DcMethod - 2].cmdline_enable[0], SW_HIDE);
+				WinExec(RulesSet[DcMethod - 2].cmdline_enable[1], SW_HIDE);
+				RulesSet[DcMethod - 2].enable = TRUE;
+			}
+		}
+		else {
+			if (RulesSet[0].enable == 0) {
+				WinExec(RulesSet[0].cmdline_enable[0], SW_HIDE);
+				WinExec(RulesSet[0].cmdline_enable[1], SW_HIDE);
+				RulesSet[0].enable = TRUE;
+			}
+			if (RulesSet[1].enable == 0) {
+				WinExec(RulesSet[1].cmdline_enable[0], SW_HIDE);
+				WinExec(RulesSet[1].cmdline_enable[1], SW_HIDE);
+				RulesSet[1].enable = TRUE;
+			}
+		}
+
+		if (RulesSet[0].enable == TRUE && RulesSet[1].enable == TRUE) {
+			RulesSet[2].enable = TRUE;
+		}
+		else {
+			RulesSet[2].enable = FALSE;
+		}
+		AddLog(_T("Firewall rules activated ") + RulesSet[DcMethod - 2].RuleName.MakeUpper() + _T(" blocked"));
+		return;
+	}
 
 	if (AdaptersSet[AdapterCurrent].Connection) {
-		CString release;
-		if (DcMethod == 0) {
-			release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
-		}
-		else if (DcMethod == 1) {
-			release = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=disabled");
-		}
-
-		USES_CONVERSION;
-		LPWSTR temp = new WCHAR[release.GetLength() + 1];
-		wcscpy((LPTSTR)temp, T2W((LPTSTR)release.GetBuffer(NULL)));
-		release.ReleaseBuffer();
-
 		STARTUPINFO si = { sizeof(si) };
 		si.dwFlags = STARTF_USESHOWWINDOW;
 		si.wShowWindow = SW_HIDE;
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&pi, sizeof(pi));
 
-		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-		delete[] temp;
-		temp = NULL;
+		CreateProcess(NULL, AdaptersSet[AdapterCurrent].cmdline_disconnect[DcMethod], NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+		//GetLocalTime(&systime);
+		//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		//m_log += _T("\r\n") + time + _T("Disconnecting...");
+		AddLog(_T("Disconnecting..."));
+		//UpdateData(false);
+		//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 		SetTimer(1, 15000, NULL);
 		waiting = !waiting;
 		MSG msg;
 		while (true) {
 			if (MsgWaitForMultipleObjects(1, &pi.hThread, FALSE, 15000, QS_ALLEVENTS) == WAIT_OBJECT_0) {
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+				//GetLocalTime(&systime);
+				//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-				m_LogContent += _T("\r\n") + time + _T("Disconnected");
-				UpdateData(false);
-				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+				//m_log += _T("\r\n") + time + _T("Disconnected");
+				AddLog(_T("Disconnected"));
+				//UpdateData(false);
+				//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 				break;
 			}
 			else if (timeout) {
 				WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+				//GetLocalTime(&systime);
+				//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-				m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-				m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
-				UpdateData(false);
-				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+				//m_log += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+				//m_log += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+				AddLog(_T("Disconnecting timeout!!!"));
+				AddLog(_T("Adapter may have no internet connection or disabled DHCP"));
+				//UpdateData(false);
+				//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 				timeout = !timeout;
 				break;
@@ -821,21 +1020,22 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 		//	GetLocalTime(&systime);
 		//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		//	m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-		//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+		//	m_log += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+		//	m_log += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 		//	UpdateData(false);
-		//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		//	m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		//}
 
 		AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
 	}
 	else {
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+		//GetLocalTime(&systime);
+		//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnected");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		//m_log += _T("\r\n") + time + _T("Disconnected");
+		AddLog(_T("Disconnected"));
+		//UpdateData(false);
+		//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 }
 
@@ -843,62 +1043,80 @@ void CNetDisconnectorDlg::OnNetworkDisconnect()
 void CNetDisconnectorDlg::OnNetworkConnect()
 {
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
+
+	if (DcMethod >= 2) {
+		if (DcMethod - 2 != 2) {
+			if (RulesSet[DcMethod - 2].enable == 1) {
+				WinExec(RulesSet[DcMethod - 2].cmdline_disable[0], SW_HIDE);
+				WinExec(RulesSet[DcMethod - 2].cmdline_disable[1], SW_HIDE);
+				RulesSet[DcMethod - 2].enable = FALSE;
+			}
+		}
+		else {
+			if (RulesSet[0].enable == 1) {
+				WinExec(RulesSet[0].cmdline_disable[0], SW_HIDE);
+				WinExec(RulesSet[0].cmdline_disable[1], SW_HIDE);
+				RulesSet[0].enable = FALSE;
+			}
+			if (RulesSet[1].enable == 1) {
+				WinExec(RulesSet[1].cmdline_disable[0], SW_HIDE);
+				WinExec(RulesSet[1].cmdline_disable[1], SW_HIDE);
+				RulesSet[1].enable = FALSE;
+			}
+		}
+
+		if (RulesSet[0].enable == TRUE && RulesSet[1].enable == TRUE) {
+			RulesSet[2].enable = TRUE;
+		}
+		else {
+			RulesSet[2].enable = FALSE;
+		}
+		AddLog(_T("Firewall rules deactivated ") + RulesSet[DcMethod - 2].RuleName.MakeUpper() + _T(" unblocked"));
+		return;
+	}
 
 	if (!AdaptersSet[AdapterCurrent].Connection) {
-		CString renew;
-		if (DcMethod == 0) {
-			renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
-		}
-		else if (DcMethod == 1) {
-			renew = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
-		}
-
-		USES_CONVERSION;
-		LPWSTR temp = new WCHAR[renew.GetLength() + 1];
-		wcscpy((LPTSTR)temp, T2W((LPTSTR)renew.GetBuffer(NULL)));
-		renew.ReleaseBuffer();
-
 		STARTUPINFO si = { sizeof(si) };
 		si.dwFlags = STARTF_USESHOWWINDOW;
 		si.wShowWindow = SW_HIDE;
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&pi, sizeof(pi));
 
-		CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-		delete[] temp;
-		temp = NULL;
+		CreateProcess(NULL, AdaptersSet[AdapterCurrent].cmdline_connect[DcMethod], NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+		//GetLocalTime(&systime);
+		//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Connecting...");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		//m_log += _T("\r\n") + time + _T("Connecting...");
+		AddLog(_T("Connecting..."));
+		//UpdateData(false);
+		//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 		SetTimer(1, 15000, NULL);
 		waiting = !waiting;
 		MSG msg;
 		while (true) {
 			if (MsgWaitForMultipleObjects(1, &pi.hThread, FALSE, 15000, QS_ALLEVENTS) == WAIT_OBJECT_0) {
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+				//GetLocalTime(&systime);
+				//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-				m_LogContent += _T("\r\n") + time + _T("Connected");
-				UpdateData(false);
-				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+				//m_log += _T("\r\n") + time + _T("Connected");
+				AddLog(_T("Connected"));
+				//UpdateData(false);
+				//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 				break;
 			}
 			else if (timeout) {
 				WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+				//GetLocalTime(&systime);
+				//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-				m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-				m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
-				UpdateData(false);
-				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+				//m_log += _T("\r\n") + time + _T("Connecting timeout!!!");
+				//m_log += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+				AddLog(_T("Connecting timeout!!!"));
+				AddLog(_T("Adapter may have no internet connection or disabled DHCP"));
+				//UpdateData(false);
+				//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 				timeout = !timeout;
 				break;
@@ -917,21 +1135,22 @@ void CNetDisconnectorDlg::OnNetworkConnect()
 		//	GetLocalTime(&systime);
 		//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		//	m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-		//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+		//	m_log += _T("\r\n") + time + _T("Connecting timeout!!!");
+		//	m_log += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 		//	UpdateData(false);
-		//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		//	m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		//}
 
 		AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
 	}
 	else {
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+		//GetLocalTime(&systime);
+		//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-		m_LogContent += _T("\r\n") + time + _T("Connected");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		//m_log += _T("\r\n") + time + _T("Connected");
+		AddLog(_T("Connected"));
+		//UpdateData(false);
+		//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
 }
 
@@ -941,8 +1160,8 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 	if (nHotKeyId && !waiting) {//If match the HotKeyId then continue
 		KillTimer(2);
 		UpdateData(true);
-		SYSTEMTIME systime;
-		CString time;
+		//SYSTEMTIME systime;
+		//CString time;
 
 
 		/*DWORD dwID;//Running in another thread
@@ -964,22 +1183,76 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			Sleep(1);
 		}*/
 
+		if (DcMethod >= 2) {
+			if (RulesSet[DcMethod - 2].enable == 0) {
+				if (DcMethod - 2 != 2) {
+					if (RulesSet[DcMethod - 2].enable == 0) {
+						WinExec(RulesSet[DcMethod - 2].cmdline_enable[0], SW_HIDE);
+						WinExec(RulesSet[DcMethod - 2].cmdline_enable[1], SW_HIDE);
+						RulesSet[DcMethod - 2].enable = TRUE;
+					}
+				}
+				else {
+					WinExec(RulesSet[0].cmdline_enable[0], SW_HIDE);
+					WinExec(RulesSet[0].cmdline_enable[1], SW_HIDE);
+					RulesSet[0].enable = TRUE;
+					WinExec(RulesSet[1].cmdline_enable[0], SW_HIDE);
+					WinExec(RulesSet[1].cmdline_enable[1], SW_HIDE);
+					RulesSet[1].enable = TRUE;
+					RulesSet[2].enable = TRUE;
+				}
+
+				if (DcSoundState == MF_CHECKED)
+					PlaySound(MAKEINTRESOURCE(IDR_WAVE1), AfxGetResourceHandle(), SND_ASYNC | SND_RESOURCE | SND_NODEFAULT);
+
+				AddLog(_T("Firewall rules activated ") + RulesSet[DcMethod - 2].RuleName.MakeUpper() + _T(" blocked"));
+
+				if (AutoReconnectState == BST_CHECKED && ARApplytoFirewallState == BST_CHECKED) {
+					CString temp;
+					temp.Format(_T("%d"), reconnectDelay / 1000);
+					AddLog(_T("Auto reconnect after ") + temp + _T("s... Press ") + get_hotkey.MakeUpper() + _T(" again to connect now"));
+					
+					SetTimer(2, reconnectDelay, NULL);
+					reconnectCountdown = true;
+				}
+				else {
+					AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect"));
+				}
+			}
+			else if (RulesSet[DcMethod - 2].enable == 1) {
+				if (DcMethod - 2 != 2) {
+					WinExec(RulesSet[DcMethod - 2].cmdline_disable[0], SW_HIDE);
+					WinExec(RulesSet[DcMethod - 2].cmdline_disable[1], SW_HIDE);
+					RulesSet[DcMethod - 2].enable = FALSE;
+				}
+				else {
+					WinExec(RulesSet[0].cmdline_disable[0], SW_HIDE);
+					WinExec(RulesSet[0].cmdline_disable[1], SW_HIDE);
+					RulesSet[0].enable = FALSE;
+					WinExec(RulesSet[1].cmdline_disable[0], SW_HIDE);
+					WinExec(RulesSet[1].cmdline_disable[1], SW_HIDE);
+					RulesSet[1].enable = FALSE;
+					RulesSet[2].enable = FALSE;
+				}
+
+				if (RcSoundState == MF_CHECKED)
+					PlaySound(MAKEINTRESOURCE(IDR_WAVE2), AfxGetResourceHandle(), SND_ASYNC | SND_RESOURCE | SND_NODEFAULT);
+
+				AddLog(_T("Firewall rules deactivated ") + RulesSet[DcMethod - 2].RuleName.MakeUpper() + _T(" unblocked"));
+				AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+			}
+
+			if (RulesSet[0].enable == TRUE && RulesSet[1].enable == TRUE) {
+				RulesSet[2].enable = TRUE;
+			}
+			else {
+				RulesSet[2].enable = FALSE;
+			}
+			return;
+		}
 
 		if (AdaptersSet[AdapterCurrent].Connection) {
 			AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
-
-			CString release;
-			if(DcMethod == 0) {
-				release = _T("cmd.exe /c ipconfig /release \"") + get_adapter + _T("\">nul");
-			}
-			else if(DcMethod == 1) {
-				release = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=disabled");
-			}
-
-			USES_CONVERSION;
-			LPWSTR temp = new WCHAR[release.GetLength() + 1];
-			wcscpy((LPTSTR)temp, T2W((LPTSTR)release.GetBuffer(NULL)));
-			release.ReleaseBuffer();
 
 			STARTUPINFO si = {sizeof(si)};
 			si.dwFlags = STARTF_USESHOWWINDOW;
@@ -987,16 +1260,15 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			PROCESS_INFORMATION pi;
 			ZeroMemory(&pi, sizeof(pi));
 
-			CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-			delete[] temp;
-			temp = NULL;
+			CreateProcess(NULL, AdaptersSet[AdapterCurrent].cmdline_disconnect[DcMethod], NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 
-			GetLocalTime(&systime);
-			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+			//GetLocalTime(&systime);
+			//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-			m_LogContent += _T("\r\n") + time + _T("Disconnecting...");
-			UpdateData(false);
-			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			//m_log += _T("\r\n") + time + _T("Disconnecting...");
+			AddLog(_T("Disconnecting..."));
+			//UpdateData(false);
+			//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 			SetTimer(1, 15000, NULL);
 			waiting = !waiting;
@@ -1009,13 +1281,16 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 				}
 				else if (timeout) {
 					WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-					GetLocalTime(&systime);
-					time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+					//GetLocalTime(&systime);
+					//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-					m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-					m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
-					UpdateData(false);
-					m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+					//m_log += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+					
+					//m_log += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+					AddLog(_T("Disconnecting timeout!!!"));
+					AddLog(_T("Adapter may have no internet connection or disabled DHCP"));
+					//UpdateData(false);
+					//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 					timeout = !timeout;
 					break;
@@ -1034,49 +1309,26 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			//	GetLocalTime(&systime);
 			//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-			//	m_LogContent += _T("\r\n") + time + _T("Disconnecting timeout!!!");
-			//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+			//	m_log += _T("\r\n") + time + _T("Disconnecting timeout!!!");
+			//	m_log += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 			//	UpdateData(false);
-			//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			//	m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 			//}
 
 			if (AutoReconnectState == BST_CHECKED) {
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
 				CString temp;
 				temp.Format(_T("%d"), reconnectDelay / 1000);
-				m_LogContent += _T("\r\n") + time + _T("Auto reconnect after ") + temp + _T("s...");
-				UpdateData(false);
-				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
-				
+				AddLog(_T("Auto reconnect after ") + temp + _T("s... Press ") + get_hotkey.MakeUpper() + _T(" again to connect now"));
+
 				SetTimer(2, reconnectDelay, NULL);
 				reconnectCountdown = true;
-
-				return;
 			}
-			GetLocalTime(&systime);
-			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-			m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect");
-			UpdateData(false);
-			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			else {
+				AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect"));
+			}
 		}
 		else {
 			AdaptersSet[AdapterCurrent].Connection = !AdaptersSet[AdapterCurrent].Connection;
-
-			CString renew;
-			if (DcMethod == 0) {
-				renew = _T("cmd.exe /c ipconfig /renew \"") + get_adapter + _T("\">nul");
-			}
-			else if (DcMethod == 1) {
-				renew = _T("cmd.exe /c netsh interface set interface name=\"") + get_adapter + _T("\" admin=enabled");
-			}
-
-			USES_CONVERSION;
-			LPWSTR temp = new WCHAR[renew.GetLength() + 1];
-			wcscpy((LPTSTR)temp, T2W((LPTSTR)renew.GetBuffer(NULL)));
-			renew.ReleaseBuffer();
 
 			STARTUPINFO si = {sizeof(si)};
 			si.dwFlags = STARTF_USESHOWWINDOW;
@@ -1084,18 +1336,17 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			PROCESS_INFORMATION pi;
 			ZeroMemory(&pi, sizeof(pi));
 
-			CreateProcess(NULL, temp, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-			delete[] temp;
-			temp = NULL;
+			CreateProcess(NULL, AdaptersSet[AdapterCurrent].cmdline_connect[DcMethod], NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 
 			reconnectCountdown = false;
 
-			GetLocalTime(&systime);
-			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+			//GetLocalTime(&systime);
+			//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-			m_LogContent += _T("\r\n") + time + _T("Connecting...");
-			UpdateData(false);
-			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			//m_log += _T("\r\n") + time + _T("Connecting...");
+			AddLog(_T("Connecting..."));
+			//UpdateData(false);
+			//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 			SetTimer(1, 15000, NULL);
 			waiting = !waiting;
@@ -1108,13 +1359,15 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 				}
 				else if (timeout) {
 					WinExec("cmd.exe /c taskkill /im ipconfig.exe /t /f", SW_HIDE);//Terminate timeout process
-					GetLocalTime(&systime);
-					time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+					//GetLocalTime(&systime);
+					//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-					m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-					m_LogContent += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
-					UpdateData(false);
-					m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+					//m_log += _T("\r\n") + time + _T("Connecting timeout!!!");
+					//m_log += _T("\r\n") + time + _T("Adapter may have no internet connection or disabled DHCP");
+					AddLog(_T("Connecting timeout!!!"));
+					AddLog(_T("Adapter may have no internet connection or disabled DHCP"));
+					//UpdateData(false);
+					//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 					timeout = !timeout;
 
@@ -1136,9 +1389,9 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 						temp = _T("WM_KEYUP");
 					else
 						temp.Format(_T("%d "), msg.message);
-					m_LogContent += _T("\r\n") + time + countdown + temp;
+					m_log += _T("\r\n") + time + countdown + temp;
 					UpdateData(false);
-					m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);*/
+					m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);*/
 
 					DispatchMessage(&msg);
 				}
@@ -1152,42 +1405,46 @@ void CNetDisconnectorDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			//	GetLocalTime(&systime);
 			//	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-			//	m_LogContent += _T("\r\n") + time + _T("Connecting timeout!!!");
-			//	m_LogContent += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
+			//	m_log += _T("\r\n") + time + _T("Connecting timeout!!!");
+			//	m_log += _T("\r\n") + time + _T("Target adapter may have no internet connection or disabled DHCP");
 			//	UpdateData(false);
-			//	m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			//	m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 			//}
 
 			if (AdapterWaitingforchange != -1) {
-				m_AdaptersList.GetLBText(m_AdaptersList.GetCurSel(), get_adapter);//Get adaptor name
+				m_adaptersList.GetLBText(m_adaptersList.GetCurSel(), get_adapter);//Get adaptor name
 				AdapterCurrent = AdapterWaitingforchange;
 				AdapterWaitingforchange = -1;
 
-				SYSTEMTIME systime;
-				CString time;
-				GetLocalTime(&systime);
-				time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+				//SYSTEMTIME systime;
+				//CString time;
+				//GetLocalTime(&systime);
+				//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-				m_LogContent += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter + _T("");
+				//m_log += _T("\r\n") + time + _T("Target adapter set to ") + get_adapter;
+				AddLog(_T("Target adapter set to ") + get_adapter);
 
 				if (AdaptersSet[AdapterCurrent].Connection) {
-					m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+					//m_log += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect");
+					AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
 				}
 				else {
-					m_LogContent += _T("\r\n") + time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+					//m_log += _T("\r\n") + time + _T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect");
+					AddLog(_T("This adapter is disconnected... Press ") + get_hotkey.MakeUpper() + _T(" to connect"));
 				}
 
-				UpdateData(false);
-				m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+				//UpdateData(false);
+				//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 
 				return;
 			}
-			GetLocalTime(&systime);
-			time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+			//GetLocalTime(&systime);
+			//time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
 
-			m_LogContent += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() +_T(" to disconnect");
-			UpdateData(false);
-			m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+			//m_log += _T("\r\n") + time + _T("Press ") + get_hotkey.MakeUpper() +_T(" to disconnect");
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+			//UpdateData(false);
+			//m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 		}
 	}
 	CDialogEx::OnHotKey(nHotKeyId, nKey1, nKey2);
@@ -1203,9 +1460,18 @@ void CNetDisconnectorDlg::OnTimer(UINT_PTR nIDEvent)
 		timeout = !timeout;
 	case 2:
 		KillTimer(2);
-		if (!AdaptersSet[AdapterCurrent].Connection) {
-			if (!waiting) {
-				OnHotKey(1, 0, 0);
+		if (DcMethod < 2) {
+			if (!AdaptersSet[AdapterCurrent].Connection) {
+				if (!waiting) {
+					OnHotKey(1, 0, 0);
+				}
+			}
+		}
+		else if (DcMethod >= 2) {
+			if (RulesSet[DcMethod - 2].enable == 1) {
+				if (!waiting) {
+					OnHotKey(1, 0, 0);
+				}
 			}
 		}
 	default:
@@ -1213,6 +1479,58 @@ void CNetDisconnectorDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CNetDisconnectorDlg::AddLog(CString message)
+{
+	SYSTEMTIME systime;
+	CString time;
+	GetLocalTime(&systime);
+	time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+
+	m_log += _T("\r\n") + time + message;
+
+	m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+	UpdateData(false); //Update variable to control
+}
+
+
+BOOL CNetDisconnectorDlg::CheckSystemFirewall()
+{
+	HRESULT hr = S_OK;
+	INetFwMgr* fwMgr = NULL;
+	INetFwPolicy* fwPolicy = NULL;
+	INetFwProfile* fwProfile;
+	hr = CoCreateInstance(__uuidof(NetFwMgr), NULL, CLSCTX_INPROC_SERVER, __uuidof(INetFwMgr), (void**)&fwMgr);
+	BOOL error = false;
+	hr = fwMgr->get_LocalPolicy(&fwPolicy);
+	if (FAILED(hr))
+		error = true;
+	hr = fwPolicy->get_CurrentProfile(&fwProfile);
+	if (FAILED(hr))
+		error = true;
+	VARIANT_BOOL fwEnabled = NULL;
+	hr = fwProfile->get_FirewallEnabled(&fwEnabled);
+	if (FAILED(hr))
+		error = true;
+
+	if (fwEnabled != VARIANT_FALSE)
+		fwOn = TRUE;
+	else
+		fwOn = FALSE;
+
+	if (fwPolicy != NULL)
+		fwPolicy->Release();
+	if (fwMgr != NULL)
+		fwMgr->Release();
+	if (fwProfile != NULL)
+		fwProfile->Release();
+
+	if (error)
+		return FALSE;
+	else
+		return TRUE;
 }
 
 
@@ -1240,8 +1558,11 @@ void CNetDisconnectorDlg::OnDestroy()
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("RcSound"), RcSoundState);
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("DcMethod"), DcMethod);
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("AutoReconnect"), AutoReconnectState);
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("AutoReconnectFirewall"), ARApplytoFirewallState);
 	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("ReconnectDelay"), reconnectDelay);
 	AfxGetApp()->WriteProfileString(_T("Settings"), _T("Adapter"), get_adapter);//Save current adapter
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("BlockUDPState"), RulesSet[0].enable);
+	AfxGetApp()->WriteProfileInt(_T("Settings"), _T("BlockTCPState"), RulesSet[1].enable);
 	UnregisterHotKey(GetSafeHwnd(), 1);
 }
 
@@ -1294,30 +1615,18 @@ void CNetDisconnectorDlg::OnOptionsDisconnectsound()
 {
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
 
 	if (menu->GetMenuState(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND) == MF_CHECKED) {
 		DcSoundState = MF_UNCHECKED;
 		menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | MF_UNCHECKED);
 
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-		m_LogContent += _T("\r\n") + time + _T("Notification sound turned off");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		AddLog(_T("Notification sound turned off"));
 	}
 	else if (menu->GetMenuState(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
 		DcSoundState = MF_CHECKED;
 		menu->CheckMenuItem(ID_OPTIONS_DISCONNECTSOUND, MF_BYCOMMAND | MF_CHECKED);
 
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-		m_LogContent += _T("\r\n") + time + _T("Notification sound turned on");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		AddLog(_T("Notification sound turned on"));
 	}
 }
 
@@ -1326,73 +1635,223 @@ void CNetDisconnectorDlg::OnOptionsReconnectsound()
 {
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
 
 	if (menu->GetMenuState(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND) == MF_CHECKED) {
 		RcSoundState = MF_UNCHECKED;
 		menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | MF_UNCHECKED);
 
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-		m_LogContent += _T("\r\n") + time + _T("Notification sound turned off");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		AddLog(_T("Notification sound turned off"));
 	}
 	else if (menu->GetMenuState(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND) == MF_UNCHECKED) {
 		RcSoundState = MF_CHECKED;
 		menu->CheckMenuItem(ID_OPTIONS_RECONNECTSOUND, MF_BYCOMMAND | MF_CHECKED);
 
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
-
-		m_LogContent += _T("\r\n") + time + _T("Notification sound turned on");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		AddLog(_T("Notification sound turned on"));
 	}
 }
 
 
 void CNetDisconnectorDlg::OnOptionsReleaseipaddress()
 {
+	KillTimer(2);
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
 
 	if (DcMethod != 0) {
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+		//AddLog(_T("Disconnect method switch to Release IP address"));
+		AddLog(_T("Disconnect method switch to Disconnect adapter"));
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnect method switch to Release IP address");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (get_adapter == AdaptersSet[matchIndex].ConnectionName) {
+				AdapterCurrent = matchIndex;
+				break;
+			}
+		}
+		if (AdaptersSet[AdapterCurrent].Connection) {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+		}
+		else {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect"));
+		}
 	}
 
-	menu->CheckMenuRadioItem(6, 7, 6, MF_BYPOSITION);
+	//menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_RELEASEIPADDRESS, MF_BYCOMMAND);
+	//menu->CheckMenuRadioItem(6, 10, 6, MF_BYPOSITION);
 	DcMethod = 0;
+	menu->CheckMenuRadioItem(idSet[0], idSet[4], idSet[DcMethod], MF_BYCOMMAND);
+	AfxGetMainWnd()->SetWindowTextW(modeSet[DcMethod] + _T(" - NetDisconnector"));
 }
 
 
 void CNetDisconnectorDlg::OnOptionsDisableadapter()
 {
+	KillTimer(2);
 	CMenu* menu = GetMenu()->GetSubMenu(1);
 	UpdateData(true);
-	SYSTEMTIME systime;
-	CString time;
 
 	if (DcMethod != 1) {
-		GetLocalTime(&systime);
-		time.Format(_T("%02d:%02d:%02d "), systime.wHour, systime.wMinute, systime.wSecond);
+		AddLog(_T("Disconnect method switch to Disable adapter"));
 
-		m_LogContent += _T("\r\n") + time + _T("Disconnect method switch to Disable adapter");
-		UpdateData(false);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		for (int matchIndex = 0; matchIndex < aIndex; matchIndex++) {
+			if (get_adapter == AdaptersSet[matchIndex].ConnectionName) {
+				AdapterCurrent = matchIndex;
+				break;
+			}
+		}
+		if (AdaptersSet[AdapterCurrent].Connection) {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+		}
+		else {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" again to reconnect"));
+		}
 	}
 
-	menu->CheckMenuRadioItem(6, 7, 7, MF_BYPOSITION);
+	//menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_DISABLEADAPTER, MF_BYCOMMAND);
 	DcMethod = 1;
+	menu->CheckMenuRadioItem(idSet[0], idSet[4], idSet[DcMethod], MF_BYCOMMAND);
+	AfxGetMainWnd()->SetWindowTextW(modeSet[DcMethod] + _T(" - NetDisconnector"));
+}
+
+
+void CNetDisconnectorDlg::OnOptionsFirewallblockudp()
+{
+	KillTimer(2);
+	CMenu* menu = GetMenu()->GetSubMenu(1);
+	UpdateData(true);
+
+	if (DcMethod != 2) {
+		AddLog(_T("Disconnect method switch to Firewall Block UDP"));
+	}
+
+	//Check system firewall
+	if (!CheckSystemFirewall()) {
+		AddLog(_T("Failed to check firewall"));
+	}
+	//HRESULT hr = S_OK;
+	//INetFwMgr* fwMgr = NULL;
+	//INetFwPolicy* fwPolicy = NULL;
+	//INetFwProfile* fwProfile;
+	//hr = CoCreateInstance(
+	//	__uuidof(NetFwMgr),
+	//	NULL,
+	//	CLSCTX_INPROC_SERVER,
+	//	__uuidof(INetFwMgr),
+	//	(void**)&fwMgr
+	//);
+	//hr = fwMgr->get_LocalPolicy(&fwPolicy);
+	//if (FAILED(hr)) {
+	//	m_LogContent += _T("\r\n") + time + _T("Failed to check firewall");
+	//}
+	//hr = fwPolicy->get_CurrentProfile(&fwProfile);
+	//if (FAILED(hr)) {
+	//	m_LogContent += _T("\r\n") + time + _T("Failed to check firewall");
+	//}
+	//VARIANT_BOOL fwEnabled = NULL;
+	//hr = fwProfile->get_FirewallEnabled(&fwEnabled);
+	//if (FAILED(hr)) {
+	//	m_LogContent += _T("\r\n") + time + _T("Failed to check firewall");
+	//}
+	//if (fwEnabled != VARIANT_FALSE) {
+	//	fwOn = TRUE;
+	//}
+	//else {
+	//	fwOn = FALSE;
+	//}
+
+
+	if (fwOn) {
+		if (RulesSet[0].enable == 0) {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+		}
+		else {
+			AddLog(_T("Firewall rules activated... Press ") + get_hotkey.MakeUpper() + _T(" to connect"));
+		}
+	}
+	else {
+		AddLog(_T("Firewall is off"));
+		AddLog(_T("This mode can not work without firewall on"));
+	}
+
+
+	//menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_BLOCKUDP, MF_BYCOMMAND);
+	DcMethod = 2;
+	menu->CheckMenuRadioItem(idSet[0], idSet[4], idSet[DcMethod], MF_BYCOMMAND);
+	AfxGetMainWnd()->SetWindowTextW(modeSet[DcMethod] + _T(" - NetDisconnector"));
+}
+
+
+void CNetDisconnectorDlg::OnOptionsFirewallblocktcp()
+{
+	KillTimer(2);
+	CMenu* menu = GetMenu()->GetSubMenu(1);
+	UpdateData(true);
+
+	if (DcMethod != 3) {
+		AddLog(_T("Disconnect method switch to Firewall Block TCP"));
+	}
+
+
+	//Check system firewall
+	if (!CheckSystemFirewall()) {
+		AddLog(_T("Failed to check firewall"));
+	}
+
+	if (fwOn) {
+		if (RulesSet[1].enable == 0) {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+		}
+		else {
+			AddLog(_T("Firewall rules activated... Press ") + get_hotkey.MakeUpper() + _T(" to connect"));
+		}
+	}
+	else {
+		AddLog(_T("Firewall is off"));
+		AddLog(_T("This mode can not work without firewall on"));
+	}
+
+
+	//menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_BLOCKTCP, MF_BYCOMMAND);
+	DcMethod = 3;
+	menu->CheckMenuRadioItem(idSet[0], idSet[4], idSet[DcMethod], MF_BYCOMMAND);
+	AfxGetMainWnd()->SetWindowTextW(modeSet[DcMethod] + _T(" - NetDisconnector"));
+}
+
+
+void CNetDisconnectorDlg::OnOptionsFirewallblockall()
+{
+	KillTimer(2);
+	CMenu* menu = GetMenu()->GetSubMenu(1);
+	UpdateData(true);
+
+	if (DcMethod != 4) {
+		AddLog(_T("Disconnect method switch to Firewall Block ALL"));
+		//AddLog(_T("Notice this method require system firewall enabled"));
+	}
+
+
+	//Check system firewall
+	if (!CheckSystemFirewall()) {
+		AddLog(_T("Failed to check firewall"));
+	}
+
+	if (fwOn) {
+		if (RulesSet[2].enable == 0) {
+			AddLog(_T("Press ") + get_hotkey.MakeUpper() + _T(" to disconnect"));
+		}
+		else {
+			AddLog(_T("Firewall rules activated... Press ") + get_hotkey.MakeUpper() + _T(" to connect"));
+		}
+	}
+	else {
+		AddLog(_T("Firewall is off"));
+		AddLog(_T("This mode can not work without firewall on"));
+	}
+
+
+	//menu->CheckMenuRadioItem(ID_OPTIONS_RELEASEIPADDRESS, ID_OPTIONS_FIREWALLBLOCKALL, ID_OPTIONS_FIREWALLBLOCKALL, MF_BYCOMMAND);
+	DcMethod = 4;
+	menu->CheckMenuRadioItem(idSet[0], idSet[4], idSet[DcMethod], MF_BYCOMMAND);
+	AfxGetMainWnd()->SetWindowTextW(modeSet[DcMethod] + _T(" - NetDisconnector"));
 }
 
 
@@ -1450,34 +1909,46 @@ void CNetDisconnectorDlg::OnHelpManual()
 }
 
 
+void CNetDisconnectorDlg::OnHelpOpenfirewallsettings()
+{
+	WinExec("cmd.exe /c start Firewall.cpl", SW_HIDE);
+}
+
+
+void CNetDisconnectorDlg::OnHelpViewfirewallrules()
+{
+	WinExec("cmd.exe /c start WF.msc", SW_HIDE);
+}
+
+
 void CNetDisconnectorDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialogEx::OnSize(nType, cx, cy);
 
-	if (m_LogCtrl.m_hWnd != NULL) {
+	if (m_logCtrl.m_hWnd != NULL) {
 		WINDOWPLACEMENT wndpl;
-		m_LogCtrl.GetWindowPlacement(&wndpl);
+		m_logCtrl.GetWindowPlacement(&wndpl);
 
 		wndpl.rcNormalPosition.right = cx - logWidthDiff;
 		wndpl.rcNormalPosition.bottom = cy - logHeightDiff;
 
-		m_LogCtrl.SetWindowPlacement(&wndpl);
-		m_LogCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+		m_logCtrl.SetWindowPlacement(&wndpl);
+		m_logCtrl.PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
 	}
-	if (m_AdaptersList.m_hWnd != NULL) {
+	if (m_adaptersList.m_hWnd != NULL) {
 		WINDOWPLACEMENT wndpl;
-		m_AdaptersList.GetWindowPlacement(&wndpl);
+		m_adaptersList.GetWindowPlacement(&wndpl);
 
 		wndpl.rcNormalPosition.right = cx - comboWidthDiff;
 
-		m_AdaptersList.SetWindowPlacement(&wndpl);
+		m_adaptersList.SetWindowPlacement(&wndpl);
 	}
 }
 
 
 BOOL CNetDisconnectorDlg::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
-	m_LogCtrl.HideCaret();
+	m_logCtrl.HideCaret();
 
 	return CDialogEx::OnSetCursor(pWnd, nHitTest, message);
 }

@@ -32,4 +32,7 @@ public:
 	afx_msg void OnEnChangeDelay();
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	CEdit m_delayCtrl;
+	afx_msg void OnBnClickedCheck2();
+	CButton m_applytofirewall;
+	UINT input_applytofirewall;
 };

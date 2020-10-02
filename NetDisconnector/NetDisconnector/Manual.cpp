@@ -58,19 +58,31 @@ BOOL Manual::OnInitDialog()
 	UpdateData(true);
 	m_content = "    Spin the Lucky Wheel\r\n";
 	m_content += "        -  Start GTA5 with VPN or proxy enabled\r\n";
-	m_content += "        -  Wait game complete Initializing Social Club\r\n";
+	m_content += "        -  Wait game completing Initializing Social Club\r\n";
 	m_content += "        -  Join a Invite Only Session and go to Lucky Wheel\r\n";
-	m_content += "        -  Wait 4.65 seconds to press S after game show Use S to Spin prompt\r\n";
-	m_content += "        -  Press hotkey (default PAUSE key) to disconnect if it's not car\r\n";
+	m_content += "        -  Wait for 4s/4.65s to press S after the game show Use S to Spin prompt\r\n";
+	m_content += "        -  Press hotkey (default PAUSE key) to disconnect internet if it's not car\r\n";
 	m_content += "\r\n    Make solo Public Session\r\n";
 	m_content += "        -  Press hotkey (default PAUSE key) to disconnect\r\n";
 	m_content += "        -  Offline around 12s (count the reconnecting time)\r\n";
+	m_content += "\r\n    Make solo Public Session with UDP Block\r\n";
+	m_content += "        -  Change to Firewall Block UDP method\r\n";
+	m_content += "        -  Press hotkey (default PAUSE key) to disconnect\r\n";
+	m_content += "        -  Offline around 10s (game will not sign out)\r\n";
+	m_content += "\r\n    Disconnect by Firewall\r\n";
+	m_content += "        -  Firewall Block UDP mode can make solo Public Session\r\n";
+	m_content += "        -  It can disconnect all players in the session\r\n";
+	m_content += "               and block anyone from joining this session\r\n";
+	m_content += "        -  Firewall Block TCP mode can disconnect all connections to Game Server\r\n";
+	m_content += "        -  Firewall Block ALL mode can disconnect both of them\r\n";
+	m_content += "        -  Game will not force sign out by using these methods\r\n";
+	m_content += "        -  Notice all of these methods require system firewall on\r\n";
 	m_content += "\r\n    Other Things\r\n";
-	m_content += "        -  Disconnect network to prevent game save unwanted progress\r\n";
+	m_content += "        -  Disconnect the internet to prevent game saving unwanted progress\r\n";
 	m_content += "        -  Game only check region when Initializing Social Club, \r\n";
-	m_content += "            after that casino contents is unlocked until game quit, \r\n"; 
-	m_content += "            no need VPN or proxy to do casino related stuff\r\n";
-	m_content += "        -  This program working when using VPN or proxy";//\r\n
+	m_content += "               after that casino contents is unlocked until game quit, \r\n"; 
+	m_content += "               no need VPN or proxy to do casino related stuff\r\n";
+	m_content += "        -  This program work when using a VPN or proxy\r\n";//\r\n
 
 
 	/*WINDOWPLACEMENT wndpl, wndpl_parent;
