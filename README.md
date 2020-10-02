@@ -29,7 +29,7 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Change to Firewall Block UDP method<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 10s (game will not sign out)<br>
-<h4>Other Things</h4>
+<h3><ins>Other Things</ins></h3>
 &nbsp;&nbsp;-&nbsp;&nbsp;Disconnect the internet to prevent game saving unwanted progress<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;This program work when using a VPN or proxy<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;The Firewall Block methods require system firewall enabled<br>
@@ -71,11 +71,10 @@ This is a tool can disconnect internet use hotkey<br>
 </details>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_3-5.png" width="410" height="310"><br>
-<h4>Extra features</h4>
-<h5>&nbsp;&nbsp;&nbsp;&nbsp;Click these buttons to operate the network through the menu</h5>
+<h4>&nbsp;&nbsp;&nbsp;&nbsp;Click these buttons to operate the network through the menu</h4>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_manul.png" width="410" height="310"><br>
-<h5>&nbsp;&nbsp;&nbsp;&nbsp;Choose different disconnect approach</h5>
-&nbsp;&nbsp;&nbsp;&nbsp;There are two different approaches to disconnect<br>
+<h4>&nbsp;&nbsp;&nbsp;&nbsp;Choose different disconnect approach</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;There are two different disconnect approaches<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The default method is set to disconnect adapter, it's better to use, and faster to disconnect<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The disable adapter method shown below is a backup method if the default one not work<br>
 <br>
