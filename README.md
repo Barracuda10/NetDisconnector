@@ -4,7 +4,7 @@ This is a tool can disconnect internet use hotkey<br>
 [<ins>[Version 5] Download here...</ins>](https://github.com/Barracuda10/NetDisconnector/releases/download/1.4/NetDisconnector.exe)<br>
 <!--[<ins>Download newer but not yet release version here...</ins>](https://raw.githubusercontent.com/Barracuda10/NetDisconnector/master/NetDisconnector/x64/Release/NetDisconnector.exe)<br>-->
 <br>
-<img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png?token=AHWAOFFFNR4TIK4XGH3ESJK6EESXA"><br>
+<img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_main.png"><br>
 <h3><ins>Usage:</ins></h3>
 &nbsp;&nbsp;&nbsp;&nbsp;Run NetDisconnector.exe<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Check or select target network adapter name<br>
