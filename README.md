@@ -49,14 +49,14 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Enable this option to let it automatically reconnect after disconnect 15s (default)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Change the waiting period in the delay box<br>
 &nbsp;&nbsp;&nbsp;&nbsp;And you can still manually reconnect by pressing the hotkey again<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Uncheck the apply to firewall methods option to not auto reconnect when using Firewall modes<br>
 <br>
 <img src="https://raw.githubusercontent.com/Barracuda10/others/master/NetDisconnector/netdisconnector_feature_2.png" width="410" height="310"><br>
 <h4>Disconnect by Firewall</h4>
-&nbsp;&nbsp;&nbsp;&nbsp;Switch to firewall disconnect mode to let it disconnect by firewall<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can make solo Public Session, <br>
-&nbsp;&nbsp;&nbsp;&nbsp;It can disconnect all players in the session, and block anyone from joining this session<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect all connections to Game Server<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can disconnect both of them<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block UDP mode can create solo Public Session, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;It will disconnect all players in the session and block anyone from joining this session<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block TCP mode can disconnect all connections to Game Servers<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Firewall Block ALL mode can do both of them<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Game will not force sign out by using these methods<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice all of these methods require system firewall on<br>
 <details>
