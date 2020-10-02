@@ -39,7 +39,7 @@ This is a tool can disconnect internet use hotkey<br>
 </details>
 &nbsp;&nbsp;-&nbsp;&nbsp;No extra setting file needed<br>
 <br>
-<h2>Features</h2>
+<h2>Extra Features</h2>
 <h4>Change Hotkey</h4>
 &nbsp;&nbsp;&nbsp;&nbsp;Check and change current hotkey here<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Notice there are some keys may not work<br>
