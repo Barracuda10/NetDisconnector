@@ -20,11 +20,11 @@ This is a tool can disconnect internet use hotkey<br>
 <!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Notice this method doesn't work very well now, consider wait 4.65 seconds instead<br>-->
 <!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Wait 4.65 seconds also work<br>-->
 <!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Another way to get more chance is to use the left stick of the controller<br>-->
-<h4>Make solo Public Session</h4>
+<!--<h4>Make solo Public Session</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Offline around 12s (count the reconnecting time)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* This 12s count the reconnecting time, it means this time must subtract around 3s reconnecting time<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out after offline 15s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Game will force sign out after offline 15s<br>-->
 <h4>Make solo Public Session with UDP Block</h4>
 &nbsp;&nbsp;-&nbsp;&nbsp;Change to Firewall Block UDP method<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;Press hotkey (default PAUSE key) to disconnect<br>
@@ -34,10 +34,10 @@ This is a tool can disconnect internet use hotkey<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;This program work when using a VPN or proxy<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;The Firewall Block methods require system firewall enabled<br>
 &nbsp;&nbsp;-&nbsp;&nbsp;The default hotkey is set to PAUSE key<br>
-&nbsp;&nbsp;&nbsp;&nbsp;It saves last time settings in Registry<details><summary>See registry path</summary>
-&nbsp;&nbsp;&nbsp;&nbsp;HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;It saves last time settings in Registry<details><summary>See registry path</summary>
+&nbsp;&nbsp;-&nbsp;&nbsp;HKEY_CURRENT_USER\Software\NetDisconnector\NetDisconnector\Settings<br>
 </details>
-&nbsp;&nbsp;&nbsp;&nbsp;No extra setting file needed<br>
+&nbsp;&nbsp;-&nbsp;&nbsp;No extra setting file needed<br>
 <br>
 <h2>Features</h2>
 <h4>Change Hotkey</h4>
